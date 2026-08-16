@@ -23,7 +23,9 @@ def download_firmware() -> None:
     print("Downloading firmware...")
 
     now = int(time.time())
-    url = f"https://cdn.sipeed.com/nanokvm/latest.zip?n={now}"
+    # This fork's releases, not Sipeed's CDN. Fetching upstream here would
+    # replace this firmware with a stock build.
+    url = f"https://github.com/ddcash/NanoKVM-Extended/releases/latest/download/latest.zip?n={now}"
     print(f"Downloading firmware from {url}")
 
     response = requests.get(url)

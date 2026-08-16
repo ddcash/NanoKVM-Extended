@@ -5,7 +5,10 @@ import { useTranslation } from 'react-i18next';
 
 import * as api from '@/api/application.ts';
 
-const OFFICIAL_UPDATE_SERVER = 'https://cdn.sipeed.com/nanokvm';
+// Must match StableURL in the server, or the UI reports the built-in
+// default as a custom server.
+const OFFICIAL_UPDATE_SERVER =
+  'https://github.com/ddcash/NanoKVM-Extended/releases/latest/download';
 
 interface CustomServerProps {
   checkForUpdates: () => void;

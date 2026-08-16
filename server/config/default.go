@@ -20,7 +20,10 @@ var defaultConfig = &Config{
 		RefreshTokenDuration: 2678400,
 		RevokeTokensOnLogout: true,
 	},
-	Stun: "stun.l.google.com:19302",
+	// Off by default: a STUN request goes out on every WebRTC session, and
+	// on a LAN or over a VPN the host candidates are enough without it. Set a
+	// server here if this device has to traverse NAT.
+	Stun: "disable",
 	Turn: Turn{
 		TurnAddr: "",
 		TurnUser: "",
@@ -44,7 +47,7 @@ func checkDefaultValue() {
 	}
 
 	if instance.Stun == "" {
-		instance.Stun = "stun.l.google.com:19302"
+		instance.Stun = "disable"
 	}
 
 	if instance.Authentication == "" {
