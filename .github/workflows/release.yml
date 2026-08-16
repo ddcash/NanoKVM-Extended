@@ -35,7 +35,10 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          persist-credentials: false
+          # verify-release-tag.sh reads refs from origin, which needs
+          # credentials on a private repo. This workflow is dispatch-only,
+          # so no untrusted code runs with the token.
+          persist-credentials: true
 
       - name: Verify tag
         id: tag
@@ -84,7 +87,10 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          persist-credentials: false
+          # verify-release-tag.sh reads refs from origin, which needs
+          # credentials on a private repo. This workflow is dispatch-only,
+          # so no untrusted code runs with the token.
+          persist-credentials: true
 
       - name: Download package artifact
         uses: actions/download-artifact@v4
@@ -203,7 +209,10 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          persist-credentials: false
+          # verify-release-tag.sh reads refs from origin, which needs
+          # credentials on a private repo. This workflow is dispatch-only,
+          # so no untrusted code runs with the token.
+          persist-credentials: true
 
       - name: Verify and promote release
         env:
