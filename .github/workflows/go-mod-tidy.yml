@@ -1,0 +1,50 @@
+name: Go Mod Tidy
+
+# Utility workflow: runs `go mod tidy` with the real toolchain and uploads the
+# result, for use when no local Go toolchain is available.
+
+on:
+  workflow_dispatch:
+
+jobs:
+  tidy:
+    name: Tidy go.mod
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.25'
+          cache-dependency-path: server/go.sum
+
+      - name: Tidy
+        working-directory: server
+        run: |
+          go mod tidy
+          echo "### go.mod diff" >> "$GITHUB_STEP_SUMMARY"
+          echo '```diff' >> "$GITHUB_STEP_SUMMARY"
+          git diff -- go.mod >> "$GITHUB_STEP_SUMMARY" || true
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          git diff --stat -- go.mod go.sum
+
+      - name: Verify it builds
+        working-directory: server
+        run: go build ./...
+
+      - name: Upload tidied module files
+        uses: actions/upload-artifact@v4
+        with:
+          name: tidied-go-mod
+          path: |
+            server/go.mod
+            server/go.sum
+          if-no-files-found: error
