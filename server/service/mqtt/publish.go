@@ -1,6 +1,7 @@
 package mqtt
 
 import (
+	"crypto/tls"
 	"fmt"
 	"time"
 
