@@ -24,6 +24,7 @@ export const Wol = () => {
   const setKeyboardLock = useSetAtom(keyboardLockAtom);
 
   const [input, setInput] = useState('');
+  const [nameInput, setNameInput] = useState('');
   const [status, setStatus] = useState('');
   const [log, setLog] = useState('');
 
@@ -37,6 +38,7 @@ export const Wol = () => {
       setKeyboardLock({ source: 'wol-popover', locked: true });
     } else {
       setInput('');
+      setNameInput('');
       setStatus('');
       setLog('');
       setKeyboardLock({ source: 'wol-popover', locked: false });
@@ -142,18 +144,34 @@ export const Wol = () => {
     setStatus('loading');
     setLog(t('wol.saving'));
 
+    const alias = nameInput.trim();
+
     addWolMac(value)
-      .then((rsp) => {
+      .then(async (rsp) => {
         if (rsp.code !== 0) {
           setStatus('failed');
           setLog(rsp.msg);
           return;
         }
 
+        // Naming is a second call because it rewrites the whole file. Doing it
+        // here lets the alias be given while adding, rather than only by
+        // editing the entry afterwards.
+        if (alias) {
+          const named = await setWolMacName(value, alias);
+          if (named.code !== 0) {
+            setStatus('failed');
+            setLog(named.msg);
+            getMacs();
+            return;
+          }
+        }
+
         setStatus('success');
         setLog(t('wol.saved'));
         getMacs();
         setInput('');
+        setNameInput('');
       })
       .catch(() => {
         setStatus('failed');
@@ -177,6 +195,13 @@ export const Wol = () => {
             placeholder={t('wol.input')}
             onChange={handleChange}
             onPressEnter={() => wake()}
+          />
+          <Input
+            value={nameInput}
+            placeholder={t('wol.namePlaceholder')}
+            style={{ maxWidth: 140 }}
+            onChange={(e) => setNameInput(e.target.value)}
+            onPressEnter={save}
           />
           <Button onClick={save} title={t('wol.saveTip')}>
             {t('wol.save')}
