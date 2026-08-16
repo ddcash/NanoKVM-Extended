@@ -1,164 +1,131 @@
 # NanoKVM-K5CSH
 
-> **Private fork of [sipeed/NanoKVM](https://github.com/sipeed/NanoKVM)**, licensed under GPL-3.0 (see [LICENSE](LICENSE)).
-> All upstream copyright and license terms are retained. Changes made in this fork are documented in
-> [CHANGELOG-K5CSH.md](CHANGELOG-K5CSH.md).
+A fork of [sipeed/NanoKVM](https://github.com/sipeed/NanoKVM) that started with one problem —
+keyboard hotkeys would not pass through to a KVM switch — and grew into a set of changes around
+switching, monitoring, home automation and hardening.
 
-<div align="center">
-  <br>
-  <img src="https://wiki.sipeed.com/hardware/assets/NanoKVM/introduce/NanoKVM_3.png" alt="NanoKVM" style="margin: 20px 0;">
-  <h3>
-    <a href="https://wiki.sipeed.com/hardware/en/kvm/NanoKVM/introduction.html">🚀 Quick Start</a>
-     |
-    <a href="https://cn.dl.sipeed.com/shareURL/KVM/nanoKVM">🛠️ Hardware Details</a>
-     |
-    <a href="https://github.com/sipeed/NanoKVM/releases/latest">💾 Firmware Releases</a>
-  </h3>
-  <br>
-</div>
+Licensed under GPL-3.0, same as upstream. All upstream copyright and licence terms are
+retained; see [LICENSE](LICENSE). Changes made here are documented in
+[CHANGELOG-K5CSH.md](CHANGELOG-K5CSH.md), and upstream's own changelog remains in
+[CHANGELOG.md](CHANGELOG.md).
 
-## 🌟 What is NanoKVM?
+> Built for one person's hardware and shared in case it is useful. It is not affiliated with
+> Sipeed, and nothing here is tested across the whole NanoKVM range.
 
-NanoKVM is a series of compact, open-source IP-KVM devices based on the LicheeRV Nano (RISC-V). It lets you remotely access and control computers as if you were sitting in front of them, making it useful for servers, embedded systems, and other headless machines.
+## The problem this started with
 
-## 📦 Product Family
+A NanoKVM feeding an AIMOS 8-in-1 HDMI KVM switch. The switch selects inputs by keyboard
+hotkey, which worked from a physical keyboard but never from the NanoKVM.
 
-Choose the NanoKVM model that best fits your deployment:
+Two separate causes:
 
-- **NanoKVM-Cube Lite:** A barebones kit for DIY users and bulk deployments.
-- **NanoKVM-Cube Full:** A ready-to-use kit with a case, accessories, and a pre-flashed system SD card.
-- **NanoKVM-PCIe:** A PCIe-bracket form factor for internal chassis mounting. It draws power from the PCIe slot and supports optional Wi-Fi and PoE.
-- **[NanoKVM-Pro](https://github.com/sipeed/NanoKVM-Pro):** A higher-performance version with major upgrades:
-  - **Resolution:** Up to **4K@30fps / 2K@60fps**.
-  - **Network:** **1Gbps Ethernet + PoE + Wi-Fi 6**, upgraded from 100Mbps Ethernet.
-  - **Latency:** Hardware-accelerated encoding reduces latency from 100-150ms to **50-100ms**.
+1. **The emulated keyboard was not a USB HID boot device.** `S03usbdev` only set
+   `bInterfaceSubClass = 1` when a `/boot/BIOS` marker file existed, which it does not by
+   default. A real keyboard reports `1`; the NanoKVM reported `0`. BIOS/UEFI stacks and the
+   hotkey scanners in inexpensive KVM switches implement only the HID *boot protocol*, so they
+   never recognised it. Full operating systems were unaffected because they parse the report
+   descriptor. See upstream [#544](https://github.com/sipeed/NanoKVM/issues/544) and
+   [#25](https://github.com/sipeed/NanoKVM/issues/25).
 
-<div align="center">
-  <img src="https://cdn.sipeed.com/public/nanokvm-products-v2.jpg" alt="NanoKVM Product Family" width="100%" style="margin: 20px 0;">
-</div>
+2. **The switch's dedicated keyboard port rejects composite devices.** It accepts only a
+   single-function HID device, so the composite gadget (keyboard + mouse + touchpad + network +
+   mass storage) did not enumerate there at all. The switch's HUB ports do enumerate, but the
+   hotkey scanner does not listen on those. **HID Only Mode** is what fixes this; USB 1.1 was
+   not the deciding factor, dropping the composite functions was.
 
-> If you are looking for a USB-based KVM solution, check out [NanoKVM-USB](https://github.com/sipeed/NanoKVM-USB).
+Both are addressed here, and the selected HID mode now survives updates — `new_app_init()`
+copies `S03usbdev` over `/etc/init.d/` on *every* application update, which silently reverted
+the mode until the choice moved to `/etc/kvm/hid-only`.
 
-## 🛠️ Technical Specifications
+## What this fork adds
 
-| Feature            | NanoKVM-Pro                           | NanoKVM (Cube/PCIe)               | GxxKVM                             | JxxKVM                              |
-| ------------------ | ------------------------------------- | --------------------------------- | ---------------------------------- | ----------------------------------- |
-| Core               | AX630C 2xA53 1.2G                     | SG2002 1xC906 1.0G                | RV1126 4xA7 1.5G                   | RV1106 1xA7 1.2G                    |
-| Memory & Storage   | 1G LPDDR4X + 32G eMMC                 | 256M DDR3 + 32G microSD           | 1G DDR3 + 8G eMMC                  | 256M DDR3 + 16G eMMC                |
-| System             | NanoKVM / PiKVM                       | NanoKVM                           | GxxKVM                             | JxxKVM                              |
-| Resolution         | 4K@30fps / 2K@60fps                   | 1080P@60fps                       | 4K@30fps / 2K@60fps                | 1080P@60fps                         |
-| HDMI Loopout       | 4K loopout                            | —                                 | —                                  | —                                   |
-| Video Encoding     | MJPEG / H.264 / H.265                 | MJPEG / H.264                     | MJPEG / H.264                      | MJPEG / H.264                       |
-| Audio Transmit     | ✓                                     | —                                 | ✓                                  | —                                   |
-| UEFI / BIOS        | ✓                                     | ✓                                 | ✓                                  | ✓                                   |
-| Emulated USB Keyboard & Mouse | ✓                          | ✓                                 | ✓                                  | ✓                                   |
-| Emulated USB ISO   | ✓                                     | ✓                                 | ✓                                  | ✓                                   |
-| IPMI               | ✓                                     | ✓                                 | ✓                                  | —                                   |
-| Wake-on-LAN        | ✓                                     | ✓                                 | ✓                                  | ✓                                   |
-| Web Terminal       | ✓                                     | ✓                                 | ✓                                  | ✓                                   |
-| Serial Terminal    | 2 channels                            | 2 channels                        | —                                  | 1 channel                           |
-| Custom Scripts     | ✓                                     | ✓                                 | —                                  | —                                   |
-| Storage            | 32G eMMC 300MB/s                      | 32G MicroSD 12MB/s                | 8G eMMC 120MB/s                    | 8G eMMC 60MB/s                      |
-| Ethernet           | 1000M                                 | 100M                              | 1000M                              | 100M                                |
-| PoE                | Optional                              | Optional                          | —                                  | —                                   |
-| Wi-Fi              | Optional Wi-Fi 6                      | Optional Wi-Fi 6                  | —                                  | —                                   |
-| ATX Power Control  | ✓                                     | ✓                                 | Extra $15                          | Extra $10                           |
-| Display            | 1.47" 320x172 LCD / 0.96" 128x64 OLED | 0.96" 128x64 OLED                 | —                                  | 1.68" 280x240                       |
-| More Features      | Sync LED Strip / Smart Assistant      | —                                 | —                                  | —                                   |
-| Power Consumption  | 0.6A@5V                               | 0.2A@5V                           | 0.4A@5V                            | 0.2A@5V                             |
-| Power Input        | USB-C or PoE                          | USB-C                             | USB-C                              | USB-C                               |
-| Dimensions         | 65x65x26mm                            | 40x36x36mm                        | 80x60x17.5mm                       | 60x43x(24~31)mm                     |
+**KVM switching**
 
-## 📂 Project Structure
+- Named targets with recorded hotkeys, shown as buttons in the menu and reorderable.
+  Playback is stepped rather than a chord: switch hotkeys are usually sequential taps such as
+  `ScrollLock, ScrollLock, 2`, and holding the keys together does not trigger them. The delay
+  between steps is configurable, because switch firmware often drops taps that arrive faster
+  than it polls.
+- Hotkeys can also be replayed server-side, so a target can be selected with no browser open.
+- MQTT publishing, for driving an ESPHome IR blaster as an alternative switching path.
 
-```text
-├── kvmapp          # APP update package
-│   ├── jpg_stream  # Legacy support for direct updates from older versions
-│   ├── kvm_new_app # Triggers components for kvm_system updates
-│   ├── kvm_system  # Core KVM application
-│   ├── server      # Front-end and back-end integration
-│   └── system      # Essential system components
-├── web             # NanoKVM Front-end (UI)
-├── server          # NanoKVM Back-end (Service)
-├── support         # Auxiliary modules (Image subsystem, status, updates, OLED, HID, etc.)
-├── ...
-```
+**Home Assistant**
 
-## 💻 Development
+- MQTT discovery: the device announces itself and Home Assistant creates the entities. Every
+  KVM target becomes a button, alongside HDMI state and resource sensors.
+- Token-gated read-only video access, intended for go2rtc to ingest and re-serve as WebRTC.
+  Transcoding happens on the Home Assistant host; this device serves one stream it already
+  produces. The token is the on/off control — the endpoints 404 without one.
 
-Start with the guide that matches the part of NanoKVM you want to work on:
+**Monitoring**
 
-- **System support modules:** Build and update the low-level hardware support components in [support/sg2002/README.md](support/sg2002/README.md).
-- **Backend service:** Set up, build, and understand the Go service in [server/README.md](server/README.md).
-- **Frontend UI:** Develop, lint, and build the React interface in [web/README.md](web/README.md).
-- **Release packaging:** Assemble the `nanokvm_<version>.tar.gz` update package in [scripts/README.md](scripts/README.md).
+- CPU, memory, SD card, temperature, load average and uptime, read from `/proc` and `/sys`.
+  Memory reports `MemAvailable`, not `MemFree`: the kernel keeps most of the remainder as
+  reclaimable cache, so `MemFree` looks alarming while nothing is wrong.
+- A process list with stop and force-kill. `init`, `kvm_system` and `NanoKVM-Server` are not
+  killable: the first panics the kernel, the others stop video capture or take the web UI down.
 
-> Backend compilation and runtime validation require the target toolchain or a NanoKVM device. See the module-specific guides above for the latest development workflow.
+**Display and interface**
 
-### Dev container (optional)
+- Choose which rows the OLED shows, plus an optional label for telling identical devices apart.
+- Rearrange the menu bar icons.
+- Wake-on-LAN devices can be added without waking them first.
+- Tailscale version display and one-click update.
 
-The repository ships a [Dev Container](https://containers.dev) setup (`.devcontainer/`) that layers the frontend toolchain (Node 22, pnpm 11) on top of the release builder image (RISC-V cross toolchain, Go, MaixCDK), so one container covers Go, C support-layer and web development. It is a convenience for IDE users; the `make` targets in the repository root remain the canonical CLI workflow.
+**Hardening** — optional TOTP (never mandatory), security headers, audit logging for
+authentication and configuration changes, and a fix for the account file, which held the
+password hash while being world-readable.
 
-- Requirements: Docker plus an editor or CLI with dev container support (e.g. the VS Code "Dev Containers" extension, or `devcontainer up`).
-- On creation the container prepares itself automatically: `support/sg2002/build update_lib` (resyncs MaixCDK components with the checkout) and `pnpm install` for the frontend.
-- Backend: run `server/build.sh` for a release-equivalent binary (BoringCrypto + `dl_lib` RPATH). `make app` builds a plain development binary without those, so prefer `server/build.sh` whenever the result should match a release.
-- Support layer: `cd support/sg2002 && ./build kvm_system` (the MaixCDK virtualenv is part of the container environment).
-- Frontend: `cd web && pnpm dev` (VS Code forwards port 3001 automatically; other clients may need to map it themselves); see [web/README.md](web/README.md) for pointing it at a device.
-- The base image `ghcr.io/sipeed/nanokvm-builder:latest` is x86-64 only; on Apple Silicon it runs under emulation (works, but C builds are slow). You can also build the image locally first (`make builder-image`) and point the `BASE_IMAGE` build arg at it (e.g. via `build.args` in `devcontainer.json`). On Linux hosts the first container creation also takes a while: the container user is remapped to your uid, which re-chowns its home directory once.
-- Hardware-dependent verification still requires a real NanoKVM device; the container covers compiling, linting and mock-mode web development only.
+## Installing
 
-## 🔩 Hardware Platform (NanoKVM Cube/PCIe)
+Each release publishes both an over-the-air package and a full SD card image:
 
-NanoKVM is based on Sipeed [LicheeRV Nano](https://wiki.sipeed.com/hardware/zh/lichee/RV_Nano/1_intro.html). You can find specifications, schematics, and dimensional drawings in the [download station](https://dl.sipeed.com/shareURL/LICHEE/LicheeRV_Nano).
+| Asset | Use |
+|---|---|
+| `nanokvm_<version>.tar.gz` | Settings > Update > offline upload |
+| `nanokvm_<version>.img.xz` | Flash to an SD card with Etcher or `dd` |
 
-The NanoKVM Cube/PCIe hardware is built from these components:
+The OTA package is the safer path. Flash the image when starting from scratch, or to recover.
+Note that reflashing replaces the root filesystem, which resets the web password to
+`admin`/`admin`.
 
-- **NanoKVM Lite:** LicheeRV Nano plus the HDMI-to-CSI board.
-- **NanoKVM Full:** NanoKVM Lite plus the NanoKVM-A/B boards and enclosure.
-- **HDMI-to-CSI board:** Converts the HDMI input signal.
-- **NanoKVM-A board:** Provides OLED, ATX control output through USB-C, auxiliary power, and physical ATX power/reset buttons.
-- **NanoKVM-B board:** Connects NanoKVM-A to the host computer's ATX pins for remote power control.
+Anything touching USB descriptors or the OLED daemon is worth trying on a spare SD card first:
+a bad build there can leave you without input or without a display while everything else looks
+healthy.
 
-The NanoKVM image is built with the LicheeRV Nano SDK and MaixCDK. It is intended for NanoKVM hardware and is not a general-purpose KVM software package for other LicheeRV Nano or SG2002 products. If you want to build an HDMI input application on LicheeRV Nano or MaixCam, please contact us for technical support.
+## Building
 
-> Note: Of the 256MB memory on SG2002, 158MB is currently allocated to the multimedia subsystem for video capture and processing.
+CI does the work; the toolchain is awkward to reproduce by hand.
 
-- [NanoKVM-A Schematic](https://cn.dl.sipeed.com/fileList/KVM/nanoKVM/HDK/02_Schematic/SCH_RV_Nano_KVM_A_30111.pdf)
-- [NanoKVM-B Schematic](https://cn.dl.sipeed.com/fileList/KVM/nanoKVM/HDK/02_Schematic/SCH_RV_Nano_KVM_B_30131.pdf)
-- [NanoKVM-PCIe Schematic](https://cn.dl.sipeed.com/fileList/KVM/KVM_PCIE/HDK/01_Schematic/SCH_nanoKVM_PCIE_3105D_2025-12-19.pdf)
-- [NanoKVM image](https://github.com/sipeed/NanoKVM/releases/tag/NanoKVM)
+- `builder-image.yml` publishes the RISC-V builder image to GHCR.
+- `package.yml` cross-compiles the Go server and the C++ vision and system components, builds
+  the frontend, and assembles the OTA package.
+- `sd-image.yml` grafts that package onto Sipeed's published base image and emits `.img.xz`.
+  Note Sipeed uses two release tracks: numeric tags are OTA packages, `v`-prefixed tags are
+  full images.
+- `go-mod-tidy.yml` exists because `go mod tidy` needs a real toolchain; hand-written
+  `go.mod`/`go.sum` entries pick versions the module graph rejects.
 
-<div align="center">
-  <img src="https://wiki.sipeed.com/hardware/zh/kvm/assets/NanoKVM/1_intro/NanoKVM_2.jpg" alt="NanoKVM PCB Pinout" width="80%" style="margin: 20px 0;">
-</div>
+Releases are cut with `create-tag.yml` followed by `release.yml`.
 
-## 🤝 Contributing
+## Notes for anyone digging in
 
-We welcome contributions. To get started:
+- **WebRTC fails in Firefox**, not on the device: Firefox replaces its host ICE candidate with
+  an mDNS `.local` name the NanoKVM cannot resolve. Chrome works. Setting
+  `media.peerconnection.ice.obfuscate_host_addresses=false` is the workaround. ICE also fails
+  over plain HTTP in any browser, since host candidates are suppressed on an insecure origin.
+- **`server/dl_lib/libkvm.so` is a stripped link stub.** Newly exported C functions fail to
+  link without `-Wl,--allow-shlib-undefined`, because the real library defers its OpenCV and
+  mmf symbols to sibling libraries resolved only at runtime.
+- The OLED is drawn by `kvm_system`, a standalone daemon, so display work needs no new exported
+  symbols.
+- **H.265 is parked on `feat/h265`**: complete and building, never run on hardware. The encoder
+  did *not* already support it — only H.264 was implemented, despite a comment suggesting
+  otherwise — and `h264_stream_dump` hard-coded three stream packets while H.265 sends four,
+  because it prepends a VPS. Browser support is the real limit: only Chrome 136+ and Safari 18+
+  negotiate HEVC over WebRTC.
 
-1. Fork the repository.
-2. Create a feature branch.
-3. Commit your changes.
-4. Push to the branch.
-5. Open a Pull Request.
+## Credit
 
-Please keep your pull requests small and focused to facilitate easier review and merging.
-
-> 🎁 **Contributors who submit high-quality Pull Requests may receive a NanoKVM Cube, PCIe, or Pro as a token of our appreciation!**
-
-## 🛒 Where to Buy
-
-- [AliExpress (global, except USA and Russia)](https://www.aliexpress.com/item/1005007369816019.html)
-- [Taobao](https://item.taobao.com/item.htm?id=811206560480)
-- [Preorder for other regions](https://sipeed.com/nanokvm)
-
-## 💬 Community & Support
-
-- [Discord](https://discord.gg/V4sAZ9XWpN)
-- QQ group: 703230713
-- Email: [support@sipeed.com](mailto:support@sipeed.com)
-- [FAQ](https://wiki.sipeed.com/hardware/en/kvm/NanoKVM/faq.html)
-
-## 📜 License
-
-This project is licensed under the GPL-3.0 License. See [LICENSE](LICENSE) for details.
+All the hard parts — the RISC-V platform, the video pipeline, the web application — are
+[Sipeed's](https://github.com/sipeed/NanoKVM). This fork is a thin layer on top.
