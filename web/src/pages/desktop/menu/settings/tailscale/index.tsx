@@ -11,6 +11,7 @@ import { Install } from './install.tsx';
 import { Login } from './login.tsx';
 import { Run } from './run.tsx';
 import type { Status } from './types.ts';
+import { Version } from './version.tsx';
 
 type TailscaleProps = {
   setIsLocked: (isLocked: boolean) => void;
@@ -71,6 +72,13 @@ export const Tailscale = ({ setIsLocked }: TailscaleProps) => {
 
           {(status?.state === 'stopped' || status?.state === 'running') && (
             <Device status={status} onLogout={getStatus} />
+          )}
+
+          {status?.state && status.state !== 'notInstall' && (
+            <>
+              <Divider className="opacity-50" />
+              <Version />
+            </>
           )}
 
           {errMsg && <div className="pt-5 text-red-500">{errMsg}</div>}

@@ -15,6 +15,8 @@ func extensionsRouter(r *gin.Engine) {
 	api.POST("/tailscale/install", ts.Install)     // install tailscale
 	api.POST("/tailscale/uninstall", ts.Uninstall) // uninstall tailscale
 	api.GET("/tailscale/status", ts.GetStatus)     // get tailscale status
+	api.GET("/tailscale/version", ts.GetVersion)   // installed and available versions
+	api.POST("/tailscale/update", ts.Update)       // reinstall at the latest version
 	api.POST("/tailscale/up", ts.Up)               // run tailscale up
 	api.POST("/tailscale/down", ts.Down)           // run tailscale down
 	api.POST("/tailscale/login", ts.Login)         // tailscale login

@@ -49,3 +49,19 @@ export function login() {
 export function logout() {
   return http.post('/api/extensions/tailscale/logout');
 }
+
+export type TailscaleVersion = {
+  installed: string;
+  latest: string;
+  updateAvailable: boolean;
+};
+
+export function getVersion() {
+  return http.get('/api/tailscale/version');
+}
+
+// Reinstalls at the latest version. Login state lives outside the binaries, so
+// the node stays connected.
+export function update() {
+  return http.post('/api/tailscale/update');
+}

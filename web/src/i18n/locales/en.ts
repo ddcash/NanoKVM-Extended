@@ -562,6 +562,12 @@ const en = {
         }
       },
       tailscale: {
+        version: 'Tailscale version',
+        versionUnknown: 'Unknown',
+        update: 'Update',
+        reinstall: 'Reinstall',
+        updated: 'Tailscale updated',
+        updateFailed: 'Failed to update Tailscale',
         title: 'Tailscale',
         memory: {
           title: 'Memory optimization',
