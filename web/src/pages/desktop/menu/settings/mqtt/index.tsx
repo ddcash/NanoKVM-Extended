@@ -14,7 +14,11 @@ const emptyConfig = {
   username: '',
   topic: '',
   commands: [] as MqttCommand[],
-  hasPassword: false
+  hasPassword: false,
+  haEnabled: false,
+  haDiscoveryPrefix: 'homeassistant',
+  haNodeId: 'nanokvm',
+  haDeviceName: 'NanoKVM'
 };
 
 export const Mqtt = () => {
@@ -70,6 +74,10 @@ export const Mqtt = () => {
         username: config.username,
         topic: config.topic,
         commands: config.commands,
+        haEnabled: config.haEnabled,
+        haDiscoveryPrefix: config.haDiscoveryPrefix,
+        haNodeId: config.haNodeId,
+        haDeviceName: config.haDeviceName,
         // Omitted unless edited, so the stored password survives a save.
         ...(isPasswordDirty ? { password } : {})
       })
@@ -186,6 +194,47 @@ export const Mqtt = () => {
             <Button danger icon={<Trash2Icon size={14} />} onClick={() => removeCommand(index)} />
           </div>
         ))}
+      </div>
+
+      <Divider className="opacity-50" style={{ margin: '32px 0' }} />
+
+      <div className="flex items-center justify-between">
+        <div className="flex flex-col">
+          <span>{t('settings.mqtt.ha')}</span>
+          <span className="text-xs text-neutral-500">{t('settings.mqtt.haDesc')}</span>
+        </div>
+        <Switch checked={config.haEnabled} onChange={(v) => update({ haEnabled: v })} />
+      </div>
+
+      <div className="mt-4 flex flex-col space-y-4">
+        <div className="flex flex-col space-y-1">
+          <span className="text-sm">{t('settings.mqtt.haDeviceName')}</span>
+          <Input
+            value={config.haDeviceName}
+            placeholder="NanoKVM"
+            onChange={(e) => update({ haDeviceName: e.target.value })}
+          />
+        </div>
+
+        <div className="flex flex-col space-y-1">
+          <span className="text-sm">{t('settings.mqtt.haNodeId')}</span>
+          <Input
+            value={config.haNodeId}
+            placeholder="nanokvm"
+            onChange={(e) => update({ haNodeId: e.target.value })}
+          />
+          <span className="text-xs text-neutral-500">{t('settings.mqtt.haNodeIdDesc')}</span>
+        </div>
+
+        <div className="flex flex-col space-y-1">
+          <span className="text-sm">{t('settings.mqtt.haPrefix')}</span>
+          <Input
+            value={config.haDiscoveryPrefix}
+            placeholder="homeassistant"
+            onChange={(e) => update({ haDiscoveryPrefix: e.target.value })}
+          />
+          <span className="text-xs text-neutral-500">{t('settings.mqtt.haPrefixDesc')}</span>
+        </div>
       </div>
 
       <div className="mt-6">

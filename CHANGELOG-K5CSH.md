@@ -3,6 +3,27 @@
 Changes in this fork relative to upstream [sipeed/NanoKVM](https://github.com/sipeed/NanoKVM).
 Upstream's own changelog remains in [CHANGELOG.md](CHANGELOG.md).
 
+## 2.7.0
+
+### Added
+
+- **Home Assistant integration over MQTT discovery.** Enable it under Settings > MQTT. This
+  device announces itself to Home Assistant, which creates the entities on its own; every
+  configured KVM Switch target is mirrored as a Home Assistant button, so selecting a machine
+  can be automated.
+
+  This uses a persistent connection rather than the one-shot publishing behind user-defined
+  commands, because discovery needs a live session: a retained last-will so entities go
+  unavailable when the device drops off, a subscription so buttons can be pressed, and
+  periodic state. Discovery documents are retained, so Home Assistant restores the entities
+  across restarts without this device being online.
+
+- **Server-side hotkey replay.** KVM targets can now be triggered with no browser present,
+  via `POST /api/switcher/press` or the Home Assistant buttons. The browser still plays
+  targets over the WebSocket to keep the UI responsive. Rather than duplicate the keymap in
+  Go, the browser resolves each key's HID usage code when the hotkey is recorded and stores
+  it alongside the target.
+
 ## 2.6.1
 
 ### Fixed

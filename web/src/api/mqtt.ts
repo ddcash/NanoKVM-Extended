@@ -15,6 +15,12 @@ export type MqttConfig = {
   topic: string;
   commands: MqttCommand[];
   hasPassword: boolean;
+
+  // Home Assistant discovery
+  haEnabled: boolean;
+  haDiscoveryPrefix: string;
+  haNodeId: string;
+  haDeviceName: string;
 };
 
 // The stored password is never sent to the client; omitting it here keeps it
