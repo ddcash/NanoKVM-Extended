@@ -252,8 +252,10 @@ const en = {
     kvmSwitch: {
       title: 'KVM Switch',
       sent: 'Sent {{name}}',
-      noCommands: 'No commands configured. Add them in Settings > MQTT.',
-      disabled: 'MQTT is disabled. Enable it in Settings > MQTT.'
+      switched: 'Switched to {{name}}',
+      noTargets: 'Nothing configured yet. Add targets in Settings > KVM Switch.',
+      loadFailed: 'Failed to load targets',
+      sendFailed: 'Failed to send'
     },
     wol: {
       title: 'Wake-on-LAN',
@@ -294,6 +296,22 @@ const en = {
     },
     settings: {
       title: 'Settings',
+      switcher: {
+        title: 'KVM Switch',
+        desc: 'Give each machine behind the switch a name and record the hotkey that selects it. Named targets appear as buttons in the KVM Switch menu.',
+        targets: 'Targets',
+        addTarget: 'Add',
+        namePlaceholder: 'Name, e.g. Desktop',
+        record: 'Record keys',
+        stopRecording: 'Stop',
+        recording: 'Press the switch hotkey now...',
+        noKeys: 'No keys recorded',
+        stepDelay: 'Delay between key presses',
+        stepDelayDesc: 'Milliseconds. Increase this if the switch ignores the hotkey.',
+        save: 'Save',
+        saved: 'Saved',
+        saveFailed: 'Failed to save'
+      },
       mqtt: {
         title: 'MQTT',
         enable: 'Enable MQTT',

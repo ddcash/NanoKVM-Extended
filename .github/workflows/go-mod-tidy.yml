@@ -40,7 +40,7 @@ jobs:
       # the pure-Go packages, which is enough to catch type and import errors.
       - name: Type-check pure Go packages
         working-directory: server
-        run: go build ./service/mqtt/... ./service/hid/... ./service/auth/... ./middleware/... ./proto/...
+        run: go build ./service/mqtt/... ./service/hid/... ./service/auth/... ./service/switcher/... ./middleware/... ./proto/...
 
       - name: Upload tidied module files
         if: always()
