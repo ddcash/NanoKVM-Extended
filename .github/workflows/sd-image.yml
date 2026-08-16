@@ -187,6 +187,26 @@ jobs:
 
           sudo rm -rf mnt/kvmapp
           sudo cp -a "$payload" mnt/kvmapp
+
+          # /etc/init.d/S03usbdev is a real file baked at image build time, not
+          # a symlink into /kvmapp, so replacing /kvmapp alone leaves the stock
+          # USB gadget script running at boot. Install it explicitly. This is
+          # the same copy the HID-mode switch performs at runtime
+          # (service/hid/status.go: ModeNormalScript -> USBDevScript).
+          sudo install -m 0755 mnt/kvmapp/system/init.d/S03usbdev mnt/etc/init.d/S03usbdev
+
+          # Fail the build rather than ship an image that silently boots the
+          # stock descriptors.
+          if sudo grep -q "boot/BIOS" mnt/etc/init.d/S03usbdev; then
+            echo "::error::/etc/init.d/S03usbdev still gates subclass on /boot/BIOS"
+            exit 1
+          fi
+          if ! sudo grep -q "functions/hid.GS0/subclass" mnt/etc/init.d/S03usbdev; then
+            echo "::error::/etc/init.d/S03usbdev does not set the keyboard boot subclass"
+            exit 1
+          fi
+          echo "verified: /etc/init.d/S03usbdev sets the boot subclass unconditionally"
+
           sudo sync
 
           echo "installed version: $(sudo cat mnt/kvmapp/version 2>/dev/null || echo unknown)"

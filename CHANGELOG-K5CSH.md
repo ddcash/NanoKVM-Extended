@@ -3,6 +3,24 @@
 Changes in this fork relative to upstream [sipeed/NanoKVM](https://github.com/sipeed/NanoKVM).
 Upstream's own changelog remains in [CHANGELOG.md](CHANGELOG.md).
 
+## 2.5.3
+
+### Fixed
+
+- **The SD image now actually installs the HID fix.**
+  `/etc/init.d/S03usbdev` is a regular file baked into the base image at build time, not a
+  symlink into `/kvmapp`, and it is a different (older) file than the copy shipped in the
+  application package. Replacing `/kvmapp` therefore left the stock USB gadget script running
+  at boot, so the 2.5.1 and 2.5.2 images did not change any USB descriptor.
+
+  The image build now installs `kvmapp/system/init.d/S03usbdev` over `/etc/init.d/S03usbdev`
+  — the same copy the HID-mode switch performs at runtime — and fails the build if the
+  resulting script still gates the subclass on `/boot/BIOS`.
+
+  **This does not apply to OTA updates**, which only replace `/kvmapp`. After updating over
+  OTA, toggle Menu > Mouse > HID Only Mode off and on to copy the new script into
+  `/etc/init.d/`, or flash the image instead.
+
 ## 2.5.2
 
 ### Added
