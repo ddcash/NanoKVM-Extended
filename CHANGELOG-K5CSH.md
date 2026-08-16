@@ -27,6 +27,26 @@ What it contains:
 Before reviving it: H.265 over WebRTC works only in Chrome 136+ and Safari 18+. Firefox does
 not support it and has stated it will not.
 
+## 2.8.0
+
+### Added
+
+- **Camera access for Home Assistant**, under Settings > MQTT. Home Assistant needs to pull
+  video from something that cannot hold a browser session, so the existing MJPEG stream is
+  exposed to a caller holding a token. go2rtc ingests `multipart/x-mixed-replace` directly and
+  re-serves it as WebRTC, which means the transcoding happens on the Home Assistant host and
+  this device serves one stream it already produces. Publishing frames over MQTT was rejected
+  for the opposite reason: it would make a 256 MB device encode and ship every frame through
+  the broker.
+
+  The token is the on/off control. Both endpoints return 404 until one is generated, disabling
+  clears it, and enabling mints a fresh one so toggling off and on invalidates any URL handed
+  out before. The two routes sit outside the session-authenticated group and are read-only:
+  neither can send input to the target. The token is compared in constant time and accepted
+  from the query string, because go2rtc takes a plain URL.
+
+  A snapshot endpoint is included for a still-image or polling setup.
+
 ## 2.7.1
 
 > **2.7.0 was tagged from a commit that did not contain any of this.** The work below was
