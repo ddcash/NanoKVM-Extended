@@ -3,7 +3,26 @@
 Changes in this fork relative to upstream [sipeed/NanoKVM](https://github.com/sipeed/NanoKVM).
 Upstream's own changelog remains in [CHANGELOG.md](CHANGELOG.md).
 
-## Unreleased
+## 2.5.2
+
+### Added
+
+- **MQTT command publishing, with a KVM Switch menu.**
+  Provides a switching path that does not depend on HID at all: NanoKVM publishes a
+  command to an MQTT broker, and an ESPHome IR blaster subscribed to that topic
+  transmits the switch's IR code.
+
+  Commands are user-defined name/topic/payload triples, so payloads can be matched to
+  whatever the ESPHome automation expects without rebuilding the firmware. Each becomes
+  a button in the new KVM Switch menu. Configure under Settings > MQTT.
+
+  The client connects and disconnects per publish rather than holding an idle
+  connection, keeping the feature entirely off the video and HID paths. Broker
+  credentials are stored in `/etc/kvm/mqtt.json`, written atomically at mode 0600; the
+  stored password is never returned to the browser. TLS connections require TLS 1.2 or
+  newer.
+
+## 2.5.1
 
 ### Fixed
 
