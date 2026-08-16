@@ -67,9 +67,17 @@ jobs:
               echo "--- does it gate subclass on /boot/BIOS? ---"
               sudo grep -n "boot/BIOS" mnt/etc/init.d/S03usbdev || echo "(no /boot/BIOS gate found)"
             fi
+            if [ -d mnt/etc/init.d ]; then
+              echo "--- /etc/init.d/S95nanokvm (what actually launches the server) ---"
+              sudo cat mnt/etc/init.d/S95nanokvm 2>/dev/null || true
+            fi
             if [ -d mnt/kvmapp ]; then
               echo "--- /kvmapp/version ---"
               sudo cat mnt/kvmapp/version 2>/dev/null || true
+              echo "--- /kvmapp top level ---"
+              sudo ls -la mnt/kvmapp/ || true
+              echo "--- where are server binaries and web dirs? ---"
+              sudo find mnt/kvmapp -maxdepth 3 -name 'NanoKVM-Server' -o -maxdepth 3 -name 'web' -type d 2>/dev/null || true
             fi
             sudo umount mnt
           done
