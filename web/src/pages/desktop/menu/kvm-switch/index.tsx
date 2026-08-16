@@ -25,6 +25,9 @@ export const KvmSwitch = () => {
       if (rsp.code !== 0) return;
       setEnabled(!!rsp.data?.enabled);
       setCommands(rsp.data?.commands || []);
+    }).catch((error) => {
+      console.error('Failed to load MQTT config:', error);
+      setLog('Failed to load configuration');
     });
   }
 
