@@ -3,9 +3,50 @@
 Changes in this fork relative to upstream [sipeed/NanoKVM](https://github.com/sipeed/NanoKVM).
 Upstream's own changelog remains in [CHANGELOG.md](CHANGELOG.md).
 
-## 2.7.0
+## Parked work
+
+### H.265 (branch `feat/h265`, not merged)
+
+A complete H.265 path exists on `feat/h265` and builds end to end, but is **not on `main`** and
+has never run on hardware. Parked deliberately; revisit if HEVC becomes worthwhile.
+
+What it contains:
+
+- An H.265 encoder channel (`PT_H265`, `VENC_RC_MODE_H265CBR`) in `kvm_mmf.cpp`, which had only
+  ever implemented H.264 despite a comment implying otherwise.
+- A fix to `h264_stream_dump`, which hard-coded three stream packets (SPS/PPS/I). H.265 sends
+  four, because it prepends a VPS, so every H.265 keyframe would have been discarded as a VENC
+  error. It now copies however many packets arrive, which is correct for both codecs.
+- `kvmv_set_codec`/`kvmv_get_codec`, cgo bindings, a persisted setting, and a WebRTC track that
+  selects its mime type and RTP payloader from the codec actually in use.
+- Two build fixes that are prerequisites for **any** addition to the C API, not just H.265. The
+  Go server links against a stripped `libkvm.so` stub checked into git, so newly exported
+  functions failed to link; the real library defers its OpenCV and mmf symbols to sibling
+  libraries resolved at runtime, which needs `-Wl,--allow-shlib-undefined`.
+
+Before reviving it: H.265 over WebRTC works only in Chrome 136+ and Safari 18+. Firefox does
+not support it and has stated it will not.
+
+## 2.7.1
+
+> **2.7.0 was tagged from a commit that did not contain any of this.** The work below was
+> committed to a side branch while `git push origin main` pushed the unchanged `main` ref, so
+> the release built from `main` shipped 2.6.1's contents under a 2.7.0 tag. Use 2.7.1.
 
 ### Added
+
+- **Resource usage tab**, under Settings > Resources: CPU, memory, SD card, temperature, load
+  average and uptime, refreshed every few seconds. All of it is read from `/proc` and `/sys`,
+  so polling costs almost nothing and never touches the video or HID paths.
+
+  CPU percentage is a delta between two samples of cumulative jiffies, so a poll arriving
+  sooner than the sample gap reuses the previous answer instead of dividing by a tiny delta
+  and reporting noise. Memory reports `MemAvailable`, not `MemFree`: on this device `MemFree`
+  sits at a few MB because the kernel holds most of the remainder as reclaimable cache, which
+  reads as alarming while nothing is wrong.
+
+  The same figures are published as Home Assistant sensors, so they can be graphed and
+  alerted on there.
 
 - **Home Assistant integration over MQTT discovery.** Enable it under Settings > MQTT. This
   device announces itself to Home Assistant, which creates the entities on its own; every
