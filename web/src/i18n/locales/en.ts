@@ -332,7 +332,16 @@ const en = {
         commandPayload: 'Payload',
         save: 'Save',
         saved: 'Saved',
-        saveFailed: 'Failed to save'
+        saveFailed: 'Failed to save',
+        ha: 'Home Assistant',
+        haDesc:
+          'Publish this device to Home Assistant over MQTT discovery. Each KVM Switch target becomes a button you can automate.',
+        haDeviceName: 'Device name in Home Assistant',
+        haNodeId: 'Node ID',
+        haNodeIdDesc: 'Used in the MQTT topics. Change only if you run more than one NanoKVM.',
+        haPrefix: 'Discovery prefix',
+        haPrefixDesc:
+          "Leave as homeassistant unless you changed it in Home Assistant's MQTT settings."
       },
       mcp: {
         title: 'MCP Service',

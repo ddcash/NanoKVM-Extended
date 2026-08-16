@@ -4,8 +4,8 @@ import { PlusIcon, Trash2Icon } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
 import * as api from '@/api/switcher.ts';
-import { getKeycode, getModifierBit } from '@/lib/keymap.ts';
 import type { SwitcherStep, SwitcherTarget } from '@/api/switcher.ts';
+import { getKeycode, getModifierBit } from '@/lib/keymap.ts';
 
 function keyLabel(event: KeyboardEvent) {
   const map: Record<string, string> = {
