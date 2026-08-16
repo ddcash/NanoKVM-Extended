@@ -156,6 +156,27 @@ jobs:
 
           mkdir -p mnt
 
+          # --partscan asks the kernel to read the partition table, but the
+          # device nodes are created asynchronously by udev. Globbing straight
+          # away can therefore match nothing and make a perfectly good image
+          # look like it has no partitions.
+          for attempt in $(seq 1 15); do
+            sudo partprobe "$loop" 2>/dev/null || true
+            sudo udevadm settle 2>/dev/null || true
+            if ls "$loop"p* >/dev/null 2>&1; then
+              break
+            fi
+            echo "waiting for partition nodes on $loop (attempt $attempt)"
+            sleep 2
+          done
+
+          if ! ls "$loop"p* >/dev/null 2>&1; then
+            echo "::error::no partition nodes appeared for $loop"
+            sudo fdisk -l "$IMAGE_NAME" || true
+            exit 1
+          fi
+          echo "partitions: $(ls -d "$loop"p* | tr '\n' ' ')"
+
           # Find the partition holding /kvmapp rather than assuming an index,
           # so a base image with a different layout fails loudly instead of
           # silently producing an image with the stock firmware.
@@ -171,6 +192,7 @@ jobs:
           done
           if [ -z "$target" ]; then
             echo "::error::no partition in the base image contains /kvmapp"
+            sudo fdisk -l "$IMAGE_NAME" || true
             exit 1
           fi
 
