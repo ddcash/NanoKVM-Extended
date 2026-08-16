@@ -3,6 +3,26 @@
 Changes in this fork relative to upstream [sipeed/NanoKVM](https://github.com/sipeed/NanoKVM).
 Upstream's own changelog remains in [CHANGELOG.md](CHANGELOG.md).
 
+## 2.5.5
+
+### Fixed
+
+- **The selected HID mode now survives application updates.**
+  `new_app_init()` in `kvm_system` runs an unconditional
+  `cp -f /kvmapp/system/init.d/S03usbdev /etc/init.d/` on every application update, so a
+  device switched to HID-only mode was reverted to the composite gadget by the next
+  update. Anything depending on the HID-only layout broke silently, with no indication
+  that an update had changed it.
+
+  This matters for KVM switches whose dedicated keyboard port only accepts a
+  single-function HID device: the composite gadget (keyboard + mouse + touchpad +
+  network + mass storage) is rejected outright by that port, so keyboard hotkey
+  switching stops working.
+
+  `S03usbdev` now selects the layout at boot from `/etc/kvm/hid-only`, which lives
+  outside `/kvmapp` and therefore survives updates, rather than depending on which copy
+  of the script happens to be installed. `SetHidMode` maintains that marker.
+
 ## 2.5.4
 
 ### Fixed
