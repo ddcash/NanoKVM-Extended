@@ -18,7 +18,9 @@ static void trim(char* text)
     }
 }
 
-static void apply(const char* key, const char* value)
+/* Named distinctly: a plain apply() resolves to std::apply, which the Maix
+   headers pull into scope, and the call then fails inside <tuple>. */
+static void oled_apply_setting(const char* key, const char* value)
 {
     /* Anything other than an explicit 0 counts as on, so a malformed value
        shows the row rather than silently hiding it. */
@@ -64,7 +66,7 @@ static void reload(void)
         }
         *separator = '\0';
 
-        apply(line, separator + 1);
+        oled_apply_setting(line, separator + 1);
     }
 
     fclose(file);
