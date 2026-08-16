@@ -36,11 +36,14 @@ jobs:
           echo '```' >> "$GITHUB_STEP_SUMMARY"
           git diff --stat -- go.mod go.sum
 
-      - name: Verify it builds
+      # A full build cannot link here: dl_lib/libkvm.so is riscv64. Build only
+      # the pure-Go packages, which is enough to catch type and import errors.
+      - name: Type-check pure Go packages
         working-directory: server
-        run: go build ./...
+        run: go build ./service/mqtt/... ./proto/...
 
       - name: Upload tidied module files
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: tidied-go-mod
