@@ -1,8 +1,15 @@
 package application
 
 const (
-	StableURL  = "https://cdn.sipeed.com/nanokvm"
-	PreviewURL = "https://cdn.sipeed.com/nanokvm/preview"
+	// Updates come from this fork's releases, not Sipeed's CDN. Pointing these
+	// upstream would offer a stock build as an "update" and quietly replace
+	// everything this fork adds, so both channels resolve here. There is no
+	// separate preview channel, hence the same URL for both.
+	//
+	// GitHub's /releases/latest/ skips prereleases, so a release has to be
+	// published or promoted as stable before a device will see it.
+	StableURL  = "https://github.com/ddcash/NanoKVM-Extended/releases/latest/download"
+	PreviewURL = "https://github.com/ddcash/NanoKVM-Extended/releases/latest/download"
 
 	AppDir    = "/kvmapp"
 	BackupDir = "/root/old"

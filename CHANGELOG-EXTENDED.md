@@ -27,6 +27,21 @@ What it contains:
 Before reviving it: H.265 over WebRTC works only in Chrome 136+ and Safari 18+. Firefox does
 not support it and has stated it will not.
 
+## 2.12.0
+
+### Changed
+
+- **Updates now come from this fork rather than Sipeed's CDN.** With no custom update server
+  configured, the device fell back to upstream, which would offer a stock build as an "update"
+  and quietly replace everything this fork adds. Both the stable and preview URLs now resolve
+  here; there is no separate preview channel.
+
+  Note that GitHub's `releases/latest` skips prereleases, so a release must be published or
+  promoted as stable before a device will see it.
+
+- The repository was renamed to `NanoKVM-Extended`. GitHub redirects the old URLs, so an
+  existing custom update server keeps working, but it is worth pointing at the new address.
+
 ## 2.11.1
 
 ### Added

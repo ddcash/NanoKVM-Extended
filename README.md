@@ -1,4 +1,4 @@
-# NanoKVM-K5CSH
+# NanoKVM-Extended
 
 A fork of [sipeed/NanoKVM](https://github.com/sipeed/NanoKVM) that started with one problem —
 keyboard hotkeys would not pass through to a KVM switch — and grew into a set of changes around
@@ -6,7 +6,7 @@ switching, monitoring, home automation and hardening.
 
 Licensed under GPL-3.0, same as upstream. All upstream copyright and licence terms are
 retained; see [LICENSE](LICENSE). Changes made here are documented in
-[CHANGELOG-K5CSH.md](CHANGELOG-K5CSH.md), and upstream's own changelog remains in
+[CHANGELOG-EXTENDED.md](CHANGELOG-EXTENDED.md), and upstream's own changelog remains in
 [CHANGELOG.md](CHANGELOG.md).
 
 > Built for one person's hardware and shared in case it is useful. It is not affiliated with
@@ -77,6 +77,12 @@ authentication and configuration changes, and a fix for the account file, which 
 password hash while being world-readable.
 
 ## Installing
+
+Once this firmware is running, it checks **this repository** for updates rather than Sipeed's
+CDN. That is deliberate: upstream's build would otherwise be offered as an "update" and would
+quietly replace everything here. No configuration is needed — but note that GitHub's
+`releases/latest` skips prereleases, so only releases published or promoted as stable are
+offered.
 
 Each release publishes both an over-the-air package and a full SD card image:
 
