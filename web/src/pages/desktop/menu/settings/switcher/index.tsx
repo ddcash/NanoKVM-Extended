@@ -4,6 +4,7 @@ import { PlusIcon, Trash2Icon } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
 import * as api from '@/api/switcher.ts';
+import { getKeycode, getModifierBit } from '@/lib/keymap.ts';
 import type { SwitcherStep, SwitcherTarget } from '@/api/switcher.ts';
 
 function keyLabel(event: KeyboardEvent) {
@@ -69,7 +70,12 @@ export const Switcher = () => {
       if (heldRef.current.has(event.code)) return;
 
       heldRef.current.add(event.code);
-      stepRef.current?.keys.push({ code: event.code, label: keyLabel(event) });
+      stepRef.current?.keys.push({
+        code: event.code,
+        label: keyLabel(event),
+        keycode: getKeycode(event.code) ?? 0,
+        modifier: getModifierBit(event.code)
+      });
 
       const step = stepRef.current;
       setTargets((prev) =>

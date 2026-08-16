@@ -3,6 +3,12 @@ package proto
 type SwitcherKey struct {
 	Code  string `json:"code"`
 	Label string `json:"label"`
+	// HID usage code and modifier bit, resolved by the browser from its keymap
+	// when the hotkey is recorded. Storing them here lets the server replay a
+	// target on its own - for Home Assistant, or any automation - without
+	// duplicating the keymap in Go.
+	Keycode  uint8 `json:"keycode"`
+	Modifier uint8 `json:"modifier"`
 }
 
 // SwitcherStep is one press-and-release. Keys within a step are held together,
@@ -30,4 +36,10 @@ type GetSwitcherRsp struct {
 type SetSwitcherReq struct {
 	Targets     []SwitcherTarget `json:"targets"`
 	StepDelayMs int              `json:"stepDelayMs"`
+}
+
+type PressSwitcherReq struct {
+	// Accepts either the generated id or the target's name, so an automation
+	// can reference a machine by the label the user gave it.
+	Id string `json:"id" form:"id" validate:"required"`
 }

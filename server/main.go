@@ -13,6 +13,7 @@ import (
 	"NanoKVM-Server/logger"
 	"NanoKVM-Server/middleware"
 	"NanoKVM-Server/router"
+	"NanoKVM-Server/service/mqtt"
 	"NanoKVM-Server/service/vm"
 	"NanoKVM-Server/service/vm/jiggler"
 	"NanoKVM-Server/utils"
@@ -72,6 +73,9 @@ func run() {
 	}
 
 	router.Init(r)
+
+	// Home Assistant discovery, if configured. No-op otherwise.
+	go mqtt.StartBridge()
 
 	httpAddr := utils.ListenAddr(conf.Host, strconv.Itoa(conf.Port.Http))
 	loopbackHTTPAddr := utils.ListenAddr("127.0.0.1", strconv.Itoa(conf.Port.Http))
