@@ -245,6 +245,12 @@ const en = {
       stopBits: 'Stop bits',
       confirm: 'Ok'
     },
+    kvmSwitch: {
+      title: 'KVM Switch',
+      sent: 'Sent {{name}}',
+      noCommands: 'No commands configured. Add them in Settings > MQTT.',
+      disabled: 'MQTT is disabled. Enable it in Settings > MQTT.'
+    },
     wol: {
       title: 'Wake-on-LAN',
       sending: 'Sending command...',
@@ -284,6 +290,28 @@ const en = {
     },
     settings: {
       title: 'Settings',
+      mqtt: {
+        title: 'MQTT',
+        enable: 'Enable MQTT',
+        enableDesc:
+          'Publish commands to an MQTT broker, for example to trigger an ESPHome IR blaster that switches a KVM switch input',
+        broker: 'Broker address and port',
+        tls: 'Use TLS',
+        username: 'Username',
+        password: 'Password',
+        passwordStored: 'Unchanged. Type to replace.',
+        defaultTopic: 'Default topic',
+        defaultTopicDesc: 'Used by any command that does not set its own topic',
+        commands: 'Commands',
+        commandsDesc: 'Each command becomes a button in the KVM Switch menu',
+        addCommand: 'Add',
+        commandName: 'Name',
+        commandTopic: 'Topic (optional)',
+        commandPayload: 'Payload',
+        save: 'Save',
+        saved: 'Saved',
+        saveFailed: 'Failed to save'
+      },
       mcp: {
         title: 'MCP Service',
         service: 'Remote control MCP',

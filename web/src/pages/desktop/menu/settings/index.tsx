@@ -8,6 +8,7 @@ import {
   CircleArrowUpIcon,
   NetworkIcon,
   PaletteIcon,
+  RadioIcon,
   SettingsIcon,
   SmartphoneIcon,
   UserRoundIcon
@@ -27,6 +28,7 @@ import { Account } from './account';
 import { Appearance } from './appearance';
 import { Device } from './device';
 import { MCP } from './mcp';
+import { Mqtt } from './mqtt';
 import { Network } from './network';
 import { Tailscale } from './tailscale';
 import { Update } from './update';
@@ -48,6 +50,7 @@ export const Settings = () => {
     { id: 'appearance', icon: <PaletteIcon size={16} />, component: <Appearance /> },
     { id: 'device', icon: <SmartphoneIcon size={16} />, component: <Device /> },
     { id: 'network', icon: <NetworkIcon size={16} />, component: <Network /> },
+    { id: 'mqtt', icon: <RadioIcon size={16} />, component: <Mqtt /> },
     { id: 'mcp', icon: <BotIcon size={16} />, component: <MCP /> },
     {
       id: 'tailscale',
