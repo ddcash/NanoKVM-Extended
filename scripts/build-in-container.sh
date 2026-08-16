@@ -73,6 +73,17 @@ echo "::group::support: build kvm_vision (libkvm.so)"
 ./build kvm_vision add_to_kvmapp
 echo "::endgroup::"
 
+# The Go server links against the tracked server/dl_lib/libkvm.so, a prebuilt
+# checked into git, while the package ships the copy just built above. Anything
+# added to the C API therefore fails to link until the tracked copy is
+# refreshed. kvm_vision has just been built from this same tree, so link
+# against that instead: link time and runtime then agree by construction.
+if [ -f "$NANOKVM_PATH/kvmapp/server/dl_lib/libkvm.so" ]; then
+    echo "[INFO] refreshing link-time libkvm.so from the build just produced"
+    cp -f "$NANOKVM_PATH/kvmapp/server/dl_lib/libkvm.so" \
+          "$NANOKVM_PATH/server/dl_lib/libkvm.so"
+fi
+
 echo "::group::server: cross-compile NanoKVM-Server"
 cd "$NANOKVM_PATH/server"
 ./build.sh
