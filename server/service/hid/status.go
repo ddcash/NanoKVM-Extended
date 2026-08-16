@@ -6,6 +6,7 @@ import (
 	"io"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -25,6 +26,11 @@ const (
 	ModeHidOnlyScript = "/kvmapp/system/init.d/S03usbhid"
 
 	USBDevScript = "/etc/init.d/S03usbdev"
+
+	// Read by S03usbdev at boot. new_app_init() copies that script over
+	// /etc/init.d on every application update, so the selected mode has to
+	// persist outside /kvmapp or an update silently reverts it to normal.
+	HidOnlyMarker = "/etc/kvm/hid-only"
 )
 
 var modeMap = map[string]string{
@@ -100,6 +106,14 @@ func (s *Service) SetHidMode(c *gin.Context) {
 		return
 	}
 
+	// Record the choice so it survives the next application update, which
+	// overwrites /etc/init.d/S03usbdev unconditionally.
+	if err := setHidOnlyMarker(req.Mode == ModeHidOnly); err != nil {
+		log.Errorf("failed to persist hid mode: %s", err)
+		rsp.ErrRsp(c, -4, "operation failed")
+		return
+	}
+
 	rsp.OkRsp(c)
 
 	log.Println("reboot system...")
@@ -159,6 +173,45 @@ func ResetUSBPHY() error {
 	}
 
 	return nil
+}
+
+// setHidOnlyMarker creates or removes the marker that S03usbdev consults at
+// boot to decide which gadget layout to build.
+func setHidOnlyMarker(hidOnly bool) error {
+	if !hidOnly {
+		if err := os.Remove(HidOnlyMarker); err != nil && !errors.Is(err, os.ErrNotExist) {
+			return fmt.Errorf("remove %s: %w", HidOnlyMarker, err)
+		}
+		syncDir(filepath.Dir(HidOnlyMarker))
+		return nil
+	}
+
+	if err := os.MkdirAll(filepath.Dir(HidOnlyMarker), 0o755); err != nil {
+		return fmt.Errorf("create %s: %w", filepath.Dir(HidOnlyMarker), err)
+	}
+
+	file, err := os.OpenFile(HidOnlyMarker, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0o644)
+	if err != nil {
+		return fmt.Errorf("create %s: %w", HidOnlyMarker, err)
+	}
+	if err := file.Sync(); err != nil {
+		_ = file.Close()
+		return fmt.Errorf("sync %s: %w", HidOnlyMarker, err)
+	}
+	if err := file.Close(); err != nil {
+		return fmt.Errorf("close %s: %w", HidOnlyMarker, err)
+	}
+
+	// The reboot follows immediately, so the directory entry must be durable.
+	syncDir(filepath.Dir(HidOnlyMarker))
+	return nil
+}
+
+func syncDir(dir string) {
+	if handle, err := os.Open(dir); err == nil {
+		_ = handle.Sync()
+		_ = handle.Close()
+	}
 }
 
 func copyModeFile(srcScript string) error {

@@ -1,6 +1,18 @@
 #!/bin/sh
 # kvmhwd Rev2.2
 
+# Honour the persisted HID mode before doing anything else.
+#
+# new_app_init() in kvm_system runs "cp -f /kvmapp/system/init.d/S03usbdev
+# /etc/init.d/" on every application update, which silently reverts a device
+# that was switched to HID-only mode back to the composite gadget. Selecting
+# the mode here, from a marker that lives outside /kvmapp, makes the choice
+# survive updates: whichever copy of this script ends up in /etc/init.d, it
+# still reads the same marker at boot.
+if [ -e /etc/kvm/hid-only ] && [ -x /kvmapp/system/init.d/S03usbhid ]; then
+    exec /kvmapp/system/init.d/S03usbhid "$@"
+fi
+
 start_usb_dev(){
     . /etc/profile
     echo "usb mode: device"
