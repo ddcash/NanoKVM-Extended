@@ -27,6 +27,25 @@ What it contains:
 Before reviving it: H.265 over WebRTC works only in Chrome 136+ and Safari 18+. Firefox does
 not support it and has stated it will not.
 
+## 2.11.0
+
+### Fixed
+
+- **Saving a Wake-on-LAN device always failed with "invalid arguments"**, whatever the MAC
+  format. Adding reused the request type used for renaming, whose name field is marked
+  required, while the Save button sends only the address. Adding now has its own request type.
+
+### Added
+
+- **Process list**, in Settings > Resources: what is running, sorted by memory, with stop and
+  force-kill. It reads `/proc` directly rather than shelling out to busybox's cut-down `ps`,
+  and takes a process name from between the first `(` and the last `)` in `stat`, because a
+  name can itself contain spaces and parentheses.
+
+  `init`, `kvm_system` and `NanoKVM-Server` are not killable from here: killing the first
+  panics the kernel, and the other two would stop video capture or take the web UI down along
+  with the button that was just pressed. Kills are audited.
+
 ## 2.10.0
 
 ### Added
