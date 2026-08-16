@@ -170,3 +170,22 @@ type GetResourcesRsp struct {
 	Temperature   float64 `json:"temperature"`
 	UptimeSeconds int64   `json:"uptimeSeconds"`
 }
+
+type GetOLEDDisplayRsp struct {
+	ShowIp      bool   `json:"showIp"`
+	ShowRes     bool   `json:"showRes"`
+	ShowType    bool   `json:"showType"`
+	ShowStream  bool   `json:"showStream"`
+	ShowQuality bool   `json:"showQuality"`
+	Title       string `json:"title"`
+}
+
+type SetOLEDDisplayReq struct {
+	ShowIp      bool   `json:"showIp" form:"showIp"`
+	ShowRes     bool   `json:"showRes" form:"showRes"`
+	ShowType    bool   `json:"showType" form:"showType"`
+	ShowStream  bool   `json:"showStream" form:"showStream"`
+	ShowQuality bool   `json:"showQuality" form:"showQuality"`
+	// Shown on the IP row when that row is hidden.
+	Title string `json:"title" form:"title"`
+}

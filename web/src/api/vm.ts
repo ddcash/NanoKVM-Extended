@@ -188,3 +188,20 @@ export type Resources = {
 export function getResources() {
   return http.get('/api/vm/resources');
 }
+
+export type OLEDDisplay = {
+  showIp: boolean;
+  showRes: boolean;
+  showType: boolean;
+  showStream: boolean;
+  showQuality: boolean;
+  title: string;
+};
+
+export function getOLEDDisplay() {
+  return http.get('/api/vm/oled/display');
+}
+
+export function setOLEDDisplay(config: OLEDDisplay) {
+  return http.post('/api/vm/oled/display', config);
+}

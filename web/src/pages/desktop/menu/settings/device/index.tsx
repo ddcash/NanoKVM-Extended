@@ -5,6 +5,7 @@ import { Advanced } from './advanced';
 import { Hdmi } from './hdmi.tsx';
 import { Mdns } from './mdns.tsx';
 import { MouseJiggler } from './mouse-jiggler.tsx';
+import { OledDisplay } from './oled-display.tsx';
 import { Oled } from './oled.tsx';
 import { Reboot } from './reboot.tsx';
 import { Ssh } from './ssh.tsx';
@@ -28,6 +29,7 @@ export const Device = () => {
         <Divider className="opacity-50" />
 
         <Oled />
+        <OledDisplay />
         <MouseJiggler />
         <Divider className="opacity-50" />
 

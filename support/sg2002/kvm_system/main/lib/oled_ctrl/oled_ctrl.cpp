@@ -1,4 +1,5 @@
 #include "oled_ctrl.h"
+#include "oled_config.h"
 
 using namespace maix;
 using namespace maix::sys;
@@ -477,14 +478,29 @@ void OLED_ShowIMG(uint8_t x,uint8_t y,char *chr,uint8_t width,uint8_t height)
 
 void OLED_ShowKVMStreamState(uint8_t kvm_state_s, void* pdata)
 {
+    // A row switched off by the user is skipped entirely, so no later update
+    // paints over the blank the init pass leaves behind.
+    if(!oled_config_row_enabled(kvm_state_s)){
+        return;
+    }
+
     switch(kvm_state_s){
         case KVM_INIT:
 			if(kvm_hw_ver != 2){
-				OLED_ShowString(10, 3, "IP:                ", 8);
-				OLED_ShowString(10, 4, "RES:               ", 8);
-				OLED_ShowString(10, 5, "TYPE:              ", 8);
-				OLED_ShowString(10, 6, "STREAM:            ", 8);
-				OLED_ShowString(10, 7, "QUALITY:           ", 8);
+				const oled_config_t* oled_cfg = oled_config_get();
+				// Drawing a hidden row's label as spaces clears that line
+				// rather than leaving whatever was on screen before.
+				OLED_ShowString(10, 3, (char*)(oled_cfg->show_ip      ? "IP:                " : "                   "), 8);
+				OLED_ShowString(10, 4, (char*)(oled_cfg->show_res     ? "RES:               " : "                   "), 8);
+				OLED_ShowString(10, 5, (char*)(oled_cfg->show_type    ? "TYPE:              " : "                   "), 8);
+				OLED_ShowString(10, 6, (char*)(oled_cfg->show_stream  ? "STREAM:            " : "                   "), 8);
+				OLED_ShowString(10, 7, (char*)(oled_cfg->show_quality ? "QUALITY:           " : "                   "), 8);
+
+				// Optional label, drawn on the IP row when that row is hidden,
+				// so identical devices in a rack can be told apart.
+				if(!oled_cfg->show_ip && oled_cfg->title[0] != '\0'){
+					OLED_ShowString(10, 3, (char*)oled_cfg->title, 8);
+				}
 			}
         break;
         case KVM_ETH_IP:
