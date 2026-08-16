@@ -32,6 +32,11 @@ extern "C" {
 #define IMG_H264_TYPE_IF		3
 #define IMG_H264_TYPE_PF		4
 
+// Video codec selection, in the encoder's own numbering.
+// H.264 is the default: it is the only codec every browser decodes over WebRTC.
+#define KVMV_CODEC_H265			1
+#define KVMV_CODEC_H264			2
+
 #define NORMAL_RES                      0
 #define NEW_RES                         1
 #define UNSUPPORT_RES                   2
@@ -71,6 +76,10 @@ int kvmv_read_img(uint16_t _width, uint16_t _height, uint8_t _type, uint16_t _ql
 int free_kvmv_data(uint8_t ** _pp_kvm_data);
 void free_all_kvmv_data();
 void set_h264_gop(uint8_t _gop);
+/* Select the video codec. Takes effect on the next frame, which rebuilds the
+   encoder channel. Ignored if the value is not one of KVMV_CODEC_*. */
+void kvmv_set_codec(uint8_t _codec);
+uint8_t kvmv_get_codec(void);
 void set_frame_detact(uint8_t _frame_detact);
 void kvmv_deinit();
 uint8_t kvmv_hdmi_control(uint8_t _en);

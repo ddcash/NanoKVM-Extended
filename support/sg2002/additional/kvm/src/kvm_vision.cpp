@@ -1542,9 +1542,34 @@ bool jpg_dump(kvmv_data_t* dump_to, image::Image *raw)
 uint8_t kvmvenc_gop = default_h264_gop;
 kvm_venc_t kvm_venc;
 mmf_venc_cfg_t cfg;
+// Active video codec, in the encoder's own numbering: 1 = H.265, 2 = H.264.
+// H.264 remains the default because it is the only codec every browser can
+// decode over WebRTC.
+static uint8_t kvmv_codec_type = KVMV_CODEC_H264;
+
+uint8_t kvmv_get_codec(void)
+{
+    return kvmv_codec_type;
+}
+
+void kvmv_set_codec(uint8_t _codec)
+{
+    if (_codec != KVMV_CODEC_H264 && _codec != KVMV_CODEC_H265) {
+        return;
+    }
+    if (_codec == kvmv_codec_type) {
+        return;
+    }
+
+    kvmv_codec_type = _codec;
+    // Clearing the init flag makes the next frame rebuild the encoder channel,
+    // which is the same path a resolution change already takes.
+    kvm_venc.enc_h264_init = 0;
+}
+
 void init_venc_h264(uint16_t _width, uint16_t _height, uint16_t _qlty)
 {
-    cfg.type = 2; //1, h265, 2, h264
+    cfg.type = kvmv_codec_type; //1, h265, 2, h264
     cfg.w = _width;
     cfg.h = _height;
     cfg.fmt = mmf_invert_format_to_mmf(image::Format::FMT_YVU420SP);
@@ -1574,18 +1599,33 @@ int h264_stream_dump(kvmv_data_t* dump_to, mmf_stream_t* dump_from)
 {
     static int8_t I_Frame_index = -1;
     // debug("[kvmv]dump_from->count = %d\n", dump_from->count);
-    if (dump_from->count == 3) {
+    // A keyframe arrives as its parameter sets followed by the frame itself,
+    // concatenated here into a single access unit. H.264 sends three packets
+    // (SPS/PPS/I); H.265 sends four, because it prepends a VPS. Copying however
+    // many packets arrived keeps both codecs working without the count being
+    // hard-coded.
+    if (dump_from->count >= 2) {
 
-        dump_to->p_img_data = (uint8_t *)malloc(dump_from->data_size[0]+dump_from->data_size[1]+dump_from->data_size[2]);
-        dump_to->img_data_size = dump_from->data_size[0]+dump_from->data_size[1]+dump_from->data_size[2];
+        uint32_t total = 0;
+        for (int i = 0; i < dump_from->count; i++) {
+            total += dump_from->data_size[i];
+        }
+
+        dump_to->p_img_data = (uint8_t *)malloc(total);
+        if (dump_to->p_img_data == NULL) {
+            dump_to->img_data_size = 0;
+            return IMG_VENC_ERROR;
+        }
+        dump_to->img_data_size = total;
         dump_to->img_data_type = IMG_H264_TYPE_IF;
-        memcpy(dump_to->p_img_data, dump_from->data[0], dump_from->data_size[0]);
-        memcpy(dump_to->p_img_data+dump_from->data_size[0], dump_from->data[1], dump_from->data_size[1]);
-        memcpy(dump_to->p_img_data+dump_from->data_size[0]+dump_from->data_size[1], dump_from->data[2], dump_from->data_size[2]);
 
-        debug("[kvmv]SPS size = %d\n", dump_from->data_size[0]);
-        debug("[kvmv]PPS size = %d\n", dump_from->data_size[1]);
-        debug("[kvmv]I-Frame size = %d\n", dump_from->data_size[2]);
+        uint32_t offset = 0;
+        for (int i = 0; i < dump_from->count; i++) {
+            memcpy(dump_to->p_img_data + offset, dump_from->data[i], dump_from->data_size[i]);
+            offset += dump_from->data_size[i];
+        }
+
+        debug("[kvmv]keyframe: %d packets, %d bytes\n", dump_from->count, total);
 
         return IMG_H264_TYPE_IF;
 
