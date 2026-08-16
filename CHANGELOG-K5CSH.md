@@ -3,6 +3,23 @@
 Changes in this fork relative to upstream [sipeed/NanoKVM](https://github.com/sipeed/NanoKVM).
 Upstream's own changelog remains in [CHANGELOG.md](CHANGELOG.md).
 
+## 2.5.4
+
+### Fixed
+
+- **The MQTT settings tab crashed with "can't access property map, commands is null".**
+  Go marshals a nil slice as `null` rather than `[]`, and the client spread that null over
+  its defaults, so the render mapped over null. `Commands` is now kept non-nil in the
+  default config, after loading a file that stored null, and when a request omits it. The
+  client also coerces it, so a device on an older build cannot reproduce the crash.
+
+- **The virtual keyboard and keyboard shortcuts crashed with React error #130.**
+  `react-simple-keyboard` 3.x is CJS-only and its module export is an object whose
+  `.default` holds the component. Under the Vite 8 rolldown bundler adopted upstream in
+  761b02e, the default import resolves to that namespace object instead of the component,
+  which React rejects as an invalid element type. The interop default is now unwrapped.
+  A scan of every bare default import found this to be the only affected package.
+
 ## 2.5.3
 
 ### Fixed
