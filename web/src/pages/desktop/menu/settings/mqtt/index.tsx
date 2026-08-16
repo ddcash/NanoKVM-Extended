@@ -29,6 +29,9 @@ export const Mqtt = () => {
     api.getMqttConfig().then((rsp: any) => {
       if (rsp.code !== 0) return;
       setConfig({ ...emptyConfig, ...rsp.data });
+    }).catch((error) => {
+      console.error('Failed to load MQTT config:', error);
+      message.error('Failed to load MQTT configuration');
     });
   }, []);
 
