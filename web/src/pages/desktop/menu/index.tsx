@@ -14,6 +14,7 @@ import { DownloadImage } from './download.tsx';
 import { Fullscreen } from './fullscreen';
 import { Image } from './image';
 import { Keyboard } from './keyboard';
+import { KvmSwitch } from './kvm-switch';
 import { Mouse } from './mouse';
 import { Collapse, Expand } from './operations';
 import { Picoclaw } from './picoclaw';
@@ -109,8 +110,9 @@ export const Menu = () => {
             {isEnabled('terminal') && <Terminal />}
             {isEnabled('script') && <Script />}
             {isEnabled('wol') && <Wol />}
+            {isEnabled('kvmSwitch') && <KvmSwitch />}
 
-            {['image', 'download', 'script', 'terminal', 'wol'].some(isEnabled) && (
+            {['image', 'download', 'script', 'terminal', 'wol', 'kvmSwitch'].some(isEnabled) && (
               <Divider type="vertical" />
             )}
 
