@@ -27,6 +27,34 @@ What it contains:
 Before reviving it: H.265 over WebRTC works only in Chrome 136+ and Safari 18+. Firefox does
 not support it and has stated it will not.
 
+## 2.10.0
+
+### Added
+
+- **Wake-on-LAN devices can be added without waking them.** An address previously only joined
+  the list as a side effect of being woken, so a machine had to be woken by hand once before it
+  could be clicked. The list is now something that can be set up in advance. Naming and
+  click-to-wake already existed.
+
+- **KVM switch targets can be reordered**, which sets the order the buttons appear in both the
+  menu and Home Assistant, since both read the same list.
+
+- **The menu bar icons can be rearranged**, in Settings > Appearance, alongside the existing
+  show/hide toggles. Screen, keyboard, mouse and settings stay put: they are the controls the
+  device exists for. An order stored by an earlier version is reconciled on load rather than
+  trusted outright, so an icon added in a later release still appears for someone who had
+  already rearranged their bar.
+
+- **The Tailscale version is shown, with an update button.** Install always fetched the latest
+  archive, so updating was already a reinstall; what was missing was any way to see which
+  version is running or whether a newer one exists. The available version comes from the
+  redirect the "latest" URL lands on, and an update is only offered when both versions are
+  known and differ, so a failed lookup cannot nag about an update that may not exist.
+
+  Updating stops the daemon before replacing the binaries, since it holds them open, and
+  restarts it on the old ones if the download fails rather than leaving it stopped. Login state
+  lives outside the binaries, so the node stays connected.
+
 ## 2.9.0
 
 ### Added
