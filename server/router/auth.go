@@ -18,4 +18,9 @@ func authRouter(r *gin.Engine) {
 	api.GET("/auth/account", service.GetAccount)         // get account
 	api.POST("/auth/password", service.ChangePassword)   // change password
 	api.POST("/auth/logout", service.Logout)             // logout
+
+	api.GET("/auth/totp", service.GetTotp)               // two-factor state
+	api.POST("/auth/totp/setup", service.SetupTotp)      // generate a secret
+	api.POST("/auth/totp/enable", service.EnableTotp)    // confirm code, enable
+	api.POST("/auth/totp/disable", service.DisableTotp)  // disable (password + code)
 }

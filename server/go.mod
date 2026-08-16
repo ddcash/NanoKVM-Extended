@@ -17,6 +17,7 @@ require (
 	github.com/pion/dtls/v3 v3.1.2
 	github.com/pion/rtp v1.8.18
 	github.com/pion/webrtc/v4 v4.0.1
+	github.com/pquerna/otp v1.5.0
 	github.com/rs/cors/wrapper/gin v0.0.0-20240830163046-1084d89a1692
 	github.com/sirupsen/logrus v1.9.3
 	github.com/spf13/viper v1.19.0
@@ -60,6 +61,7 @@ require (
 	github.com/pion/stun/v3 v3.0.0 // indirect
 	github.com/pion/transport/v3 v3.0.7 // indirect
 	github.com/pion/transport/v4 v4.0.1 // indirect
+	github.com/boombuler/barcode v1.0.1-0.20190219062509-6c824513bacc // indirect
 	github.com/pion/turn/v4 v4.0.0 // indirect
 	github.com/rs/cors v1.11.0 // indirect
 	github.com/sagikazarmark/locafero v0.4.0 // indirect
