@@ -41,6 +41,10 @@ export const KvmSwitch = () => {
       .then((rsp: any) => {
         setLog(rsp.code === 0 ? t('kvmSwitch.sent', { name }) : rsp.msg);
       })
+      .catch((error) => {
+        console.error('Failed to publish command:', error);
+        setLog('Failed to send command');
+      })
       .finally(() => setSending(''));
   }
 
