@@ -2132,6 +2132,79 @@ int mmf_add_venc_channel(int ch, mmf_venc_cfg_t *cfg) {
 	}
 
 	switch (cfg->type) {
+	case 1:
+	{
+		// H.265. Mirrors the H.264 channel below; the SDK exposes the same
+		// attribute layout with the H265 variants of the rate-control union.
+		VENC_CHN_ATTR_S stVencChnAttr;
+		memset(&stVencChnAttr, 0, sizeof(VENC_CHN_ATTR_S));
+		stVencChnAttr.stVencAttr.enType = PT_H265;
+		stVencChnAttr.stVencAttr.u32MaxPicWidth = cfg->w;
+		stVencChnAttr.stVencAttr.u32MaxPicHeight = cfg->h;
+		stVencChnAttr.stVencAttr.u32BufSize = 1024 * 1024;	// 1024Kb
+		stVencChnAttr.stVencAttr.bByFrame = CVI_TRUE;
+		stVencChnAttr.stVencAttr.u32PicWidth = cfg->w;
+		stVencChnAttr.stVencAttr.u32PicHeight = cfg->h;
+		stVencChnAttr.stVencAttr.bEsBufQueueEn = CVI_TRUE;
+		stVencChnAttr.stVencAttr.bIsoSendFrmEn = CVI_TRUE;
+		stVencChnAttr.stGopAttr.enGopMode = VENC_GOPMODE_NORMALP;
+		stVencChnAttr.stGopAttr.stNormalP.s32IPQpDelta = 2;
+		stVencChnAttr.stRcAttr.enRcMode = VENC_RC_MODE_H265CBR;
+		stVencChnAttr.stRcAttr.stH265Cbr.u32Gop = cfg->gop;
+		stVencChnAttr.stRcAttr.stH265Cbr.u32StatTime = 2;
+		stVencChnAttr.stRcAttr.stH265Cbr.u32SrcFrameRate = cfg->intput_fps;
+		stVencChnAttr.stRcAttr.stH265Cbr.fr32DstFrameRate = cfg->output_fps;
+		stVencChnAttr.stRcAttr.stH265Cbr.u32BitRate = cfg->bitrate;
+		stVencChnAttr.stRcAttr.stH265Cbr.bVariFpsEn = 0;
+		s32Ret = CVI_VENC_CreateChn(ch, &stVencChnAttr);
+		if (s32Ret != CVI_SUCCESS) {
+			printf("CVI_VENC_CreateChn [%d] failed with %d\n", ch, s32Ret);
+			return s32Ret;
+		}
+
+		VENC_RECV_PIC_PARAM_S stRecvParam;
+		stRecvParam.s32RecvPicNum = -1;
+		s32Ret = CVI_VENC_StartRecvFrame(ch, &stRecvParam);
+		if (s32Ret != CVI_SUCCESS) {
+			printf("CVI_VENC_StartRecvPic failed with %d\n", s32Ret);
+			return CVI_FAILURE;
+		}
+
+		VENC_RC_PARAM_S stRcParam;
+		s32Ret = CVI_VENC_GetRcParam(ch, &stRcParam);
+		if (s32Ret != CVI_SUCCESS) {
+			printf("CVI_VENC_GetRcParam failed with %d\n", s32Ret);
+			return s32Ret;
+		}
+		stRcParam.s32FirstFrameStartQp = 35;
+		stRcParam.s32InitialDelay = 1000;
+		stRcParam.stParamH265Cbr.u32MinIprop = 1;
+		stRcParam.stParamH265Cbr.u32MaxIprop = 10;
+		stRcParam.stParamH265Cbr.u32MaxQp = 51;
+		stRcParam.stParamH265Cbr.u32MinQp = 20;
+		stRcParam.stParamH265Cbr.u32MaxIQp = 51;
+		stRcParam.stParamH265Cbr.u32MinIQp = 20;
+		s32Ret = CVI_VENC_SetRcParam(ch, &stRcParam);
+		if (s32Ret != CVI_SUCCESS) {
+			printf("CVI_VENC_SetRcParam failed with %d\n", s32Ret);
+			return s32Ret;
+		}
+
+		VENC_FRAMELOST_S stFL;
+		s32Ret = CVI_VENC_GetFrameLostStrategy(ch, &stFL);
+		if (s32Ret != CVI_SUCCESS) {
+			printf("CVI_VENC_GetFrameLostStrategy failed with %d\n", s32Ret);
+			return s32Ret;
+		}
+		stFL.enFrmLostMode = FRMLOST_PSKIP;
+		s32Ret = CVI_VENC_SetFrameLostStrategy(ch, &stFL);
+		if (s32Ret != CVI_SUCCESS) {
+			printf("CVI_VENC_SetFrameLostStrategy failed with %d\n", s32Ret);
+			return s32Ret;
+		}
+
+		break;
+	}
 	case 2:
 	{
 		VENC_CHN_ATTR_S stVencChnAttr;
