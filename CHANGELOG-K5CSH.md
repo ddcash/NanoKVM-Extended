@@ -3,6 +3,46 @@
 Changes in this fork relative to upstream [sipeed/NanoKVM](https://github.com/sipeed/NanoKVM).
 Upstream's own changelog remains in [CHANGELOG.md](CHANGELOG.md).
 
+## 2.6.0
+
+### Added
+
+- **Named KVM switch buttons.**
+  Label each machine behind the switch and record the hotkey that selects it, under
+  Settings > KVM Switch. Configured targets appear as buttons in the KVM Switch menu, so
+  switching is a click instead of remembering port numbers. Only configured targets show.
+
+  Playback is stepped rather than a chord: switch hotkeys are usually sequential taps such
+  as ScrollLock, ScrollLock, 2, and the built-in shortcut feature holds every key down at
+  once, which those switches do not recognise. Each step is released before the next
+  begins, and the inter-step delay is configurable because switch firmware often drops taps
+  that arrive faster than it polls. Keys held together are still captured as one step, so
+  chords such as Ctrl+Alt+1 work.
+
+- **Optional TOTP two-factor authentication.** Opt-in and never required. Enrolment only
+  takes effect once a code confirms the authenticator is in sync, so a botched setup cannot
+  lock anyone out. Ten single-use backup codes are issued at enrolment and only their
+  hashes are stored. Disabling requires both the password and a code.
+
+  Recovery, since this device exposes no shell by default: power down, read the SD card
+  elsewhere and delete `/etc/kvm/totp.json`.
+
+- **Security headers**: frame denial, nosniff, a referrer policy, and a CSP scoped to allow
+  the app's own WebSocket and blob-based video. HSTS is deliberately omitted: the device
+  serves a self-signed certificate on a private address, and a pinned HSTS entry would lock
+  the UI out if it ever served plain HTTP again.
+
+- **Audit logging** for authentication and access-affecting configuration changes, tagged
+  with an `audit` field. Deliberately limited to cold endpoints; the HID path is never
+  logged, since that would record whatever is typed on the target.
+
+### Fixed
+
+- The account file holds the bcrypt hash of the admin password but was written world-
+  readable at `0o644`; it is now `0o600`, with an explicit chmod so files created by earlier
+  builds are tightened too. Its parent directory was created `0o644`, which leaves a
+  directory non-traversable, and is now `0o755`.
+
 ## 2.5.5
 
 ### Fixed
