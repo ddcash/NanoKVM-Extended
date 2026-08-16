@@ -5,6 +5,8 @@ import { useTranslation } from 'react-i18next';
 import { getResources } from '@/api/vm.ts';
 import type { Resources as ResourceData } from '@/api/vm.ts';
 
+import { Processes } from './processes.tsx';
+
 const REFRESH_MS = 3000;
 
 function formatBytes(bytes: number) {
@@ -142,6 +144,10 @@ export const Resources = () => {
           </span>
         </div>
       </div>
+
+      <Divider className="opacity-50" style={{ margin: '28px 0' }} />
+
+      <Processes />
     </>
   );
 };

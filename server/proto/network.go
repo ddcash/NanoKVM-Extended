@@ -17,6 +17,12 @@ type SetMacNameReq struct {
 	Name string `form:"name" validate:"required"`
 }
 
+// Adding a device only needs the address. Naming is a separate call, so
+// reusing SetMacNameReq here would reject every add for want of a name.
+type AddMacReq struct {
+	Mac string `json:"mac" form:"mac" validate:"required"`
+}
+
 type GetWifiRsp struct {
 	Supported bool   `json:"supported"`
 	ApMode    bool   `json:"apMode"`

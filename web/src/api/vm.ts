@@ -205,3 +205,22 @@ export function getOLEDDisplay() {
 export function setOLEDDisplay(config: OLEDDisplay) {
   return http.post('/api/vm/oled/display', config);
 }
+
+export type ProcessInfo = {
+  pid: number;
+  name: string;
+  command: string;
+  state: string;
+  memoryBytes: number;
+  memoryPercent: number;
+  protected: boolean;
+};
+
+export function getProcesses() {
+  return http.get('/api/vm/processes');
+}
+
+// force sends SIGKILL instead of SIGTERM.
+export function killProcess(pid: number, force: boolean) {
+  return http.post('/api/vm/processes/kill', { pid, force });
+}

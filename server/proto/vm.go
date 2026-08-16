@@ -189,3 +189,24 @@ type SetOLEDDisplayReq struct {
 	// Shown on the IP row when that row is hidden.
 	Title string `json:"title" form:"title"`
 }
+
+type ProcessInfo struct {
+	Pid           int     `json:"pid"`
+	Name          string  `json:"name"`
+	Command       string  `json:"command"`
+	State         string  `json:"state"`
+	MemoryBytes   uint64  `json:"memoryBytes"`
+	MemoryPercent float64 `json:"memoryPercent"`
+	// Killing this would stop the device working, so the UI does not offer it.
+	Protected bool `json:"protected"`
+}
+
+type GetProcessesRsp struct {
+	Processes []ProcessInfo `json:"processes"`
+}
+
+type KillProcessReq struct {
+	Pid int `json:"pid" form:"pid" validate:"required"`
+	// SIGKILL instead of SIGTERM.
+	Force bool `json:"force" form:"force"`
+}

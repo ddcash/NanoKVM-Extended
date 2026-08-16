@@ -311,7 +311,19 @@ const en = {
         load: 'Load average',
         loadTip:
           'Runnable and waiting tasks over 1, 5 and 15 minutes. This device has a single core, so sustained values above 1 mean work is queuing.',
-        uptime: 'Uptime'
+        uptime: 'Uptime',
+        processes: 'Processes',
+        processesDesc: 'Largest by memory. Hover a name to see the full command.',
+        process: 'Process',
+        refresh: 'Refresh',
+        stop: 'Stop',
+        force: 'Force',
+        stopConfirm: 'Stop {{name}}?',
+        forceConfirm: 'Force kill {{name}}? It will not be able to shut down cleanly.',
+        killed: 'Signal sent to {{name}}',
+        killFailed: 'Failed to stop the process',
+        protected: 'System',
+        protectedTip: 'This keeps the device running, so it cannot be stopped here.'
       },
       switcher: {
         title: 'KVM Switch',

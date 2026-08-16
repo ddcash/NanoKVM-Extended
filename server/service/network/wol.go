@@ -330,7 +330,7 @@ func sanitizeWolMacName(name string) string {
 // history rather than something that could be set up in advance, so a machine
 // had to be woken by hand the first time before it could be clicked.
 func (s *Service) AddMac(c *gin.Context) {
-	var req proto.SetMacNameReq
+	var req proto.AddMacReq
 	var rsp proto.Response
 
 	if err := proto.ParseFormRequest(c, &req); err != nil {
