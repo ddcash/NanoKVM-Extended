@@ -428,6 +428,20 @@ const en = {
       },
       device: {
         title: 'Device',
+        oledDisplay: 'OLED contents',
+        oledDisplayDesc: 'Choose which rows the screen shows. Changes apply within a few seconds.',
+        oledIp: 'IP address',
+        oledRes: 'Resolution',
+        oledType: 'Stream type',
+        oledStream: 'Frame rate',
+        oledQuality: 'Quality',
+        oledTitle: 'Label',
+        oledTitlePlaceholder: 'e.g. Rack KVM',
+        oledTitleDesc:
+          'Shown on the IP row when the IP is hidden, so identical devices can be told apart. Up to 20 characters.',
+        oledSave: 'Save',
+        oledSaved: 'Saved',
+        oledSaveFailed: 'Failed to save',
         oled: {
           title: 'OLED',
           description: 'Turn off OLED screen after',

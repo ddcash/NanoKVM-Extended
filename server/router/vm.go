@@ -34,6 +34,8 @@ func vmRouter(r *gin.Engine) {
 	api.POST("/vm/memory/limit", service.SetMemoryLimit) // set memory limit
 
 	api.GET("/vm/oled", service.GetOLED)  // get OLED configuration
+	api.GET("/vm/oled/display", service.GetOLEDDisplay)   // which rows the OLED shows
+	api.POST("/vm/oled/display", service.SetOLEDDisplay)
 	api.POST("/vm/oled", service.SetOLED) // set OLED configuration
 
 	// Only supported by PCIe version
