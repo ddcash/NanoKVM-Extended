@@ -1,11 +1,16 @@
 import { useRef } from 'react';
+import type { ReactNode } from 'react';
 import { Divider } from 'antd';
 import clsx from 'clsx';
 import { useAtomValue } from 'jotai';
 import { GripVerticalIcon } from 'lucide-react';
 import Draggable, { DraggableData, DraggableEvent } from 'react-draggable';
 
-import { keyboardLedStatusVisibleAtom, menuDisabledItemsAtom } from '@/jotai/settings.ts';
+import {
+  keyboardLedStatusVisibleAtom,
+  menuDisabledItemsAtom,
+  menuOrderAtom
+} from '@/jotai/settings.ts';
 import { useMenuBounds } from '@/hooks/useMenuBounds.ts';
 import { useMenuVisibility } from '@/hooks/useMenuVisibility.ts';
 
@@ -29,6 +34,7 @@ export const Menu = () => {
   const nodeRef = useRef<HTMLDivElement | null>(null);
 
   const menuDisabledItems = useAtomValue(menuDisabledItemsAtom);
+  const menuOrder = useAtomValue(menuOrderAtom);
   const isKeyboardLedStatusVisible = useAtomValue(keyboardLedStatusVisibleAtom);
 
   const {
@@ -50,6 +56,22 @@ export const Menu = () => {
   function isEnabled(item: string) {
     return !menuDisabledItems.includes(item);
   }
+
+  // Rendered from the configured order rather than fixed JSX, so the bar can be
+  // rearranged. Screen, keyboard, mouse and settings stay put: they are the
+  // controls the device exists for.
+  const components: Record<string, ReactNode> = {
+    image: <Image />,
+    download: <DownloadImage />,
+    terminal: <Terminal />,
+    script: <Script />,
+    wol: <Wol />,
+    kvmSwitch: <KvmSwitch />,
+    picoclaw: <Picoclaw />,
+    power: <Power />
+  };
+
+  const orderedItems = menuOrder.filter((key) => components[key] && isEnabled(key));
 
   return (
     <Draggable
@@ -105,30 +127,13 @@ export const Menu = () => {
             <Mouse />
             <Divider type="vertical" />
 
-            {isEnabled('image') && <Image />}
-            {isEnabled('download') && <DownloadImage />}
-            {isEnabled('terminal') && <Terminal />}
-            {isEnabled('script') && <Script />}
-            {isEnabled('wol') && <Wol />}
-            {isEnabled('kvmSwitch') && <KvmSwitch />}
+            {orderedItems.map((key) => (
+              <span key={key} className="contents">
+                {components[key]}
+              </span>
+            ))}
 
-            {['image', 'download', 'script', 'terminal', 'wol', 'kvmSwitch'].some(isEnabled) && (
-              <Divider type="vertical" />
-            )}
-
-            {isEnabled('picoclaw') && (
-              <>
-                <Picoclaw />
-                <Divider type="vertical" />
-              </>
-            )}
-
-            {isEnabled('power') && (
-              <>
-                <Power />
-                <Divider type="vertical" />
-              </>
-            )}
+            {orderedItems.length > 0 && <Divider type="vertical" />}
 
             <Settings />
             {isEnabled('fullscreen') && <Fullscreen />}

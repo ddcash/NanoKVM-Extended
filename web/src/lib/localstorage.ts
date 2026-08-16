@@ -16,6 +16,7 @@ const SKIP_UPDATE_KEY = 'nano-kvm-check-update';
 const KEYBOARD_SYSTEM_KEY = 'nano-kvm-keyboard-system';
 const KEYBOARD_LANGUAGE_KEY = 'nano-kvm-keyboard-language';
 const SKIP_MODIFY_PASSWORD_KEY = 'nano-kvm-skip-modify-password';
+const MENU_ORDER_KEY = 'menu-order';
 const MENU_DISABLED_ITEMS_KEY = 'nano-kvm-menu-disabled-items';
 const MENU_AUTO_HIDE_KEY = 'nano-kvm-menu-auto-hide';
 const KEYBOARD_LED_STATUS_VISIBLE_KEY = 'nano-kvm-keyboard-led-status-visible';
@@ -211,6 +212,18 @@ export function setMenuDisabledItems(items: string[]) {
 
 export function getMenuDisabledItems(): string[] {
   const value = localStorage.getItem(MENU_DISABLED_ITEMS_KEY);
+  return value ? JSON.parse(value) : [];
+}
+
+export function setMenuOrder(items: string[]) {
+  localStorage.setItem(MENU_ORDER_KEY, JSON.stringify(items));
+}
+
+// An empty result means "use the default order". Items missing from a stored
+// order are appended by the caller, so an icon added in a later release still
+// appears for someone who reordered the bar before it existed.
+export function getMenuOrder(): string[] {
+  const value = localStorage.getItem(MENU_ORDER_KEY);
   return value ? JSON.parse(value) : [];
 }
 

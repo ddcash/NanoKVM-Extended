@@ -4,12 +4,15 @@ import { useAtom, useAtomValue, useSetAtom } from 'jotai';
 import {
   getKeyboardLedStatusVisible,
   getMenuDisabledItems,
-  getMenuDisplayMode
+  getMenuDisplayMode,
+  getMenuOrder
 } from '@/lib/localstorage.ts';
 import {
+  DEFAULT_MENU_ORDER,
   keyboardLedStatusVisibleAtom,
   menuDisabledItemsAtom,
   menuDisplayModeAtom,
+  menuOrderAtom,
   submenuOpenCountAtom
 } from '@/jotai/settings.ts';
 
@@ -28,6 +31,7 @@ export interface MenuVisibilityState {
 export function useMenuVisibility(): MenuVisibilityState {
   const [menuDisplayMode, setMenuDisplayMode] = useAtom(menuDisplayModeAtom);
   const setMenuDisabledItems = useSetAtom(menuDisabledItemsAtom);
+  const setMenuOrder = useSetAtom(menuOrderAtom);
   const setKeyboardLedStatusVisible = useSetAtom(keyboardLedStatusVisibleAtom);
   const submenuOpenCount = useAtomValue(submenuOpenCountAtom);
 
@@ -67,6 +71,14 @@ export function useMenuVisibility(): MenuVisibilityState {
 
     const items = getMenuDisabledItems();
     setMenuDisabledItems(items);
+
+    // Append anything the stored order predates, so an icon added later is not
+    // silently hidden from someone who had already reordered the bar.
+    const storedOrder = getMenuOrder();
+    if (storedOrder.length > 0) {
+      const missing = DEFAULT_MENU_ORDER.filter((key) => !storedOrder.includes(key));
+      setMenuOrder([...storedOrder.filter((key) => DEFAULT_MENU_ORDER.includes(key)), ...missing]);
+    }
 
     setKeyboardLedStatusVisible(getKeyboardLedStatusVisible());
 
