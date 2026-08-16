@@ -85,10 +85,10 @@ start_usb_dev(){
     then
         # keyboard
         mkdir functions/hid.GS0
-        if [ -e /boot/BIOS ]
-        then
-            echo 1 > functions/hid.GS0/subclass
-        fi
+        # Boot Interface Subclass, unconditionally. BIOS/UEFI stacks and the
+        # hotkey scanners in cheap KVM switches only parse the HID boot
+        # protocol; without subclass=1 they do not see this as a keyboard.
+        echo 1 > functions/hid.GS0/subclass
         if [ ! -e /boot/usb.notwakeup ]
         then
             echo 1 > functions/hid.GS0/wakeup_on_write
@@ -100,10 +100,7 @@ start_usb_dev(){
 
         # mouse
         mkdir functions/hid.GS1
-        if [ -e /boot/BIOS ]
-        then
-            echo 1 > functions/hid.GS1/subclass
-        fi
+        echo 1 > functions/hid.GS1/subclass
         if [ ! -e /boot/usb.notwakeup ]
         then
             echo 1 > functions/hid.GS1/wakeup_on_write
@@ -115,10 +112,8 @@ start_usb_dev(){
 
         # touchpad
         mkdir functions/hid.GS2
-        if [ -e /boot/BIOS ]
-        then
-            echo 1 > functions/hid.GS2/subclass
-        fi
+        # Deliberately NOT a boot device: this reports absolute coordinates,
+        # which a boot-protocol host would misread as relative deltas.
         if [ ! -e /boot/usb.notwakeup ]
         then
             echo 1 > functions/hid.GS2/wakeup_on_write

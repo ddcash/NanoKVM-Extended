@@ -1,0 +1,5 @@
+# These files are executed on the device by /bin/sh. A CRLF checkout on a
+# Windows working copy would ship \r into the image and break them at boot.
+kvmapp/** text eol=lf
+scripts/** text eol=lf
+*.sh text eol=lf

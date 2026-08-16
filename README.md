@@ -1,4 +1,8 @@
-# NanoKVM
+# NanoKVM-K5CSH
+
+> **Private fork of [sipeed/NanoKVM](https://github.com/sipeed/NanoKVM)**, licensed under GPL-3.0 (see [LICENSE](LICENSE)).
+> All upstream copyright and license terms are retained. Changes made in this fork are documented in
+> [CHANGELOG-K5CSH.md](CHANGELOG-K5CSH.md).
 
 <div align="center">
   <br>

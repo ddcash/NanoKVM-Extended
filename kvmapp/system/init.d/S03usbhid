@@ -61,8 +61,9 @@ start_usb_dev(){
     ln -s functions/hid.GS1 configs/c.1
 
     # touchpad
+    # Deliberately NOT a boot device: this reports absolute coordinates,
+    # which a boot-protocol host would misread as relative deltas.
     mkdir functions/hid.GS2
-    echo 1 > functions/hid.GS2/subclass
     if [ ! -e /boot/usb.notwakeup ]
     then
         echo 1 > functions/hid.GS2/wakeup_on_write
