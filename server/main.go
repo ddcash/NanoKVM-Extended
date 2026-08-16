@@ -14,6 +14,7 @@ import (
 	"NanoKVM-Server/middleware"
 	"NanoKVM-Server/router"
 	"NanoKVM-Server/service/mqtt"
+	"NanoKVM-Server/service/stream"
 	"NanoKVM-Server/service/vm"
 	"NanoKVM-Server/service/vm/jiggler"
 	"NanoKVM-Server/utils"
@@ -73,6 +74,9 @@ func run() {
 	}
 
 	router.Init(r)
+
+	// Restore the saved video codec before any client connects.
+	stream.ApplyStoredCodec()
 
 	// Home Assistant discovery, if configured. No-op otherwise.
 	go mqtt.StartBridge()

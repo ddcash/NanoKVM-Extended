@@ -151,6 +151,21 @@ func createMediaEngine() (*webrtc.MediaEngine, error) {
 		return nil, err
 	}
 
+	// H.265 is not among pion's default codecs, so the offer would never
+	// advertise it. Registering it unconditionally is harmless: a browser that
+	// cannot decode HEVC simply does not select it, and today only Chrome 136+
+	// and Safari 18+ can.
+	if err := mediaEngine.RegisterCodec(webrtc.RTPCodecParameters{
+		RTPCodecCapability: webrtc.RTPCodecCapability{
+			MimeType:  webrtc.MimeTypeH265,
+			ClockRate: 90000,
+		},
+		PayloadType: 106,
+	}, webrtc.RTPCodecTypeVideo); err != nil {
+		log.Errorf("failed to register h265 codec: %s", err)
+		return nil, err
+	}
+
 	if err := mediaEngine.RegisterHeaderExtension(
 		webrtc.RTPHeaderExtensionCapability{URI: "http://www.webrtc.org/experiments/rtp-hdrext/playout-delay"},
 		webrtc.RTPCodecTypeVideo,

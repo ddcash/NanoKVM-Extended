@@ -148,6 +148,35 @@ func (k *KvmVision) SetFrameDetect(frame uint8) {
 	C.set_frame_detact(_frame)
 }
 
+// Video codec, in the encoder's own numbering.
+const (
+	CodecH265 uint8 = 1
+	CodecH264 uint8 = 2
+)
+
+// SetCodec selects the video codec. It takes effect on the next frame, which
+// rebuilds the encoder channel.
+func (k *KvmVision) SetCodec(codec uint8) {
+	k.mutex.RLock()
+	defer k.mutex.RUnlock()
+	if k.closed {
+		return
+	}
+
+	C.kvmv_set_codec(C.uint8_t(codec))
+}
+
+// GetCodec reports the codec the encoder is currently configured for.
+func (k *KvmVision) GetCodec() uint8 {
+	k.mutex.RLock()
+	defer k.mutex.RUnlock()
+	if k.closed {
+		return CodecH264
+	}
+
+	return uint8(C.kvmv_get_codec())
+}
+
 func (k *KvmVision) Close() {
 	k.mutex.Lock()
 	defer k.mutex.Unlock()

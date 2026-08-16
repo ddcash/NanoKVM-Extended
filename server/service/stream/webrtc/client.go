@@ -1,6 +1,7 @@
 package webrtc
 
 import (
+	"NanoKVM-Server/common"
 	"encoding/json"
 	"errors"
 
@@ -70,9 +71,20 @@ func (c *Client) ReadMessage() (*Message, error) {
 }
 
 func (c *Client) AddTrack() error {
+	// The track and the payloader have to describe the same codec as the
+	// encoder is producing, so both are chosen from the encoder's current
+	// setting rather than assumed.
+	mimeType := webrtc.MimeTypeH264
+	var payloader rtp.Payloader = &codecs.H264Payloader{}
+
+	if common.GetKvmVision().GetCodec() == common.CodecH265 {
+		mimeType = webrtc.MimeTypeH265
+		payloader = &codecs.H265Payloader{}
+	}
+
 	// video track
 	videoTrack, err := webrtc.NewTrackLocalStaticRTP(
-		webrtc.RTPCodecCapability{MimeType: webrtc.MimeTypeH264},
+		webrtc.RTPCodecCapability{MimeType: mimeType},
 		"video",
 		"pion-video",
 	)
@@ -85,7 +97,7 @@ func (c *Client) AddTrack() error {
 		1200,
 		100,
 		0x1234ABCD,
-		&codecs.H264Payloader{},
+		payloader,
 		rtp.NewRandomSequencer(),
 		90000,
 	)
