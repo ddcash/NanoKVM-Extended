@@ -27,6 +27,26 @@ What it contains:
 Before reviving it: H.265 over WebRTC works only in Chrome 136+ and Safari 18+. Firefox does
 not support it and has stated it will not.
 
+## 2.9.0
+
+### Added
+
+- **Choose what the OLED shows**, under Settings > Device. Each row (IP, resolution, stream
+  type, frame rate, quality) can be hidden, and an optional label can be set.
+
+  The label draws on the IP row when the IP is hidden, which is enough to tell otherwise
+  identical devices apart in a rack.
+
+  Settings live in `/etc/kvm/oled.conf`, outside `/kvmapp`, so they survive an application
+  update — the same reason the HID mode marker moved there. The `kvm_system` daemon re-reads
+  the file when its timestamp changes, so a save applies within seconds without restarting
+  anything, and a missing file means show everything, which is the stock behaviour. The file
+  is replaced atomically, since the daemon watches the timestamp and could otherwise read a
+  half-written file.
+
+  A hidden row is skipped before rendering and its label painted as spaces, so no text is
+  left stranded on screen by a later state update.
+
 ## 2.8.0
 
 ### Added
