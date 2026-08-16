@@ -14,4 +14,5 @@ func switcherRouter(r *gin.Engine) {
 
 	api.GET("/switcher", service.GetSwitcher)  // get KVM switch targets
 	api.POST("/switcher", service.SetSwitcher) // set KVM switch targets
+	api.POST("/switcher/press", service.PressTarget) // replay a target's hotkey
 }

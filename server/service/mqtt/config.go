@@ -35,6 +35,14 @@ type Config struct {
 	Password string              `json:"password"`
 	Topic    string              `json:"topic"`
 	Commands []proto.MqttCommand `json:"commands"`
+
+	// Home Assistant discovery. Independent of Commands above: that publishes
+	// one-shot payloads to arbitrary topics, this keeps a connection open so
+	// entities can report state and accept commands.
+	HaEnabled         bool   `json:"haEnabled"`
+	HaDiscoveryPrefix string `json:"haDiscoveryPrefix"`
+	HaNodeId          string `json:"haNodeId"`
+	HaDeviceName      string `json:"haDeviceName"`
 }
 
 func defaultConfig() Config {
@@ -62,6 +70,11 @@ func (s *Service) GetConfig(c *gin.Context) {
 		Topic:       cfg.Topic,
 		Commands:    cfg.Commands,
 		HasPassword: cfg.Password != "",
+
+		HaEnabled:         cfg.HaEnabled,
+		HaDiscoveryPrefix: cfg.HaDiscoveryPrefix,
+		HaNodeId:          cfg.HaNodeId,
+		HaDeviceName:      cfg.HaDeviceName,
 	})
 }
 
@@ -97,6 +110,23 @@ func (s *Service) SetConfig(c *gin.Context) {
 		Commands: commands,
 		Tls:      current.Tls,
 		Password: current.Password,
+
+		HaEnabled:         current.HaEnabled,
+		HaDiscoveryPrefix: current.HaDiscoveryPrefix,
+		HaNodeId:          current.HaNodeId,
+		HaDeviceName:      current.HaDeviceName,
+	}
+	if req.HaEnabled != nil {
+		cfg.HaEnabled = *req.HaEnabled
+	}
+	if req.HaDiscoveryPrefix != nil {
+		cfg.HaDiscoveryPrefix = strings.TrimSpace(*req.HaDiscoveryPrefix)
+	}
+	if req.HaNodeId != nil {
+		cfg.HaNodeId = strings.TrimSpace(*req.HaNodeId)
+	}
+	if req.HaDeviceName != nil {
+		cfg.HaDeviceName = strings.TrimSpace(*req.HaDeviceName)
 	}
 	if req.Tls != nil {
 		cfg.Tls = *req.Tls
@@ -117,6 +147,9 @@ func (s *Service) SetConfig(c *gin.Context) {
 		rsp.ErrRsp(c, -3, "failed to save mqtt config")
 		return
 	}
+
+	// Pick up the new settings immediately rather than at the next boot.
+	go StartBridge()
 
 	rsp.OkRsp(c)
 }
