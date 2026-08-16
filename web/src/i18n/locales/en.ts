@@ -14,6 +14,10 @@ const en = {
       placeholderPassword2: 'Please enter password again',
       noEmptyUsername: 'Username required',
       noEmptyPassword: 'Password required',
+      noEmptyCode: 'Verification code required',
+      placeholderCode: 'Verification code',
+      codeRequired: 'Enter the code from your authenticator app',
+      invalidCode: 'Invalid verification code',
       noAccount: 'Failed to get user information, please refresh web page or reset password',
       invalidUser: 'Invalid username or password',
       locked: 'Too many logins, please try again later',
@@ -583,7 +587,25 @@ const en = {
         logoutBtn: 'Logout',
         logoutDesc: 'Are you sure you want to logout?',
         okBtn: 'Yes',
-        cancelBtn: 'No'
+        cancelBtn: 'No',
+        totp: 'Two-Factor Authentication',
+        totpDesc: 'Require a code from an authenticator app when signing in',
+        totpEnabled: 'Enabled',
+        totpDisabled: 'Disabled',
+        totpEnable: 'Enable',
+        totpDisableBtn: 'Disable',
+        totpScan: 'Scan this in your authenticator app, then enter a code to confirm.',
+        totpSecret: 'Or enter this key manually',
+        totpConfirm: 'Confirm',
+        totpCode: 'Verification code',
+        totpPassword: 'Current password',
+        totpBackupTitle: 'Save your backup codes',
+        totpBackupDesc:
+          'Each code works once. Store them somewhere safe: without your authenticator or a backup code, recovery means removing /etc/kvm/totp.json from the SD card.',
+        totpDone: 'Done',
+        totpEnabledMsg: 'Two-factor authentication enabled',
+        totpDisabledMsg: 'Two-factor authentication disabled',
+        totpFailed: 'Operation failed'
       }
     },
     picoclaw: {

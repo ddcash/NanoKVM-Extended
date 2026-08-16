@@ -6,6 +6,7 @@ import { useNavigate } from 'react-router-dom';
 import * as api from '@/api/auth.ts';
 
 import { Logout } from './logout.tsx';
+import { Totp } from './totp.tsx';
 
 export const Account = () => {
   const { t } = useTranslation();
@@ -42,6 +43,8 @@ export const Account = () => {
             {t('settings.account.updateBtn')}
           </Button>
         </div>
+
+        <Totp />
       </div>
 
       <Divider className="opacity-50" />

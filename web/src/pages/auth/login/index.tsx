@@ -1,5 +1,5 @@
 import { ReactElement, useEffect, useState } from 'react';
-import { LockOutlined, UserOutlined } from '@ant-design/icons';
+import { LockOutlined, SafetyOutlined, UserOutlined } from '@ant-design/icons';
 import { Button, Form, Input } from 'antd';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
@@ -17,6 +17,9 @@ export const Login = (): ReactElement => {
 
   const [isLoading, setIsloading] = useState(false);
   const [msg, setMsg] = useState('');
+  // Revealed only after the server reports a code is required, so the field
+  // stays hidden for accounts that have not enabled two-factor.
+  const [isCodeRequired, setIsCodeRequired] = useState(false);
 
   useEffect(() => {
     if (existToken()) {
@@ -38,13 +41,24 @@ export const Login = (): ReactElement => {
     const password = encrypt(values.password);
 
     api
-      .login(username, password)
+      .login(username, password, values.code)
       .then((rsp: any) => {
+        // -6 means the password was accepted but a code is still needed.
+        if (rsp.code === -6) {
+          setIsCodeRequired(true);
+          setMsg(t('auth.codeRequired'));
+          return;
+        }
+
         if (rsp.code !== 0) {
           let errorMsg = t('auth.error');
           if (rsp.code === -2) errorMsg = t('auth.invalidUser');
           else if (rsp.code === -5) errorMsg = t('auth.locked');
           else if (rsp.code === -4) errorMsg = t('auth.globalLocked');
+          else if (rsp.code === -7) {
+            errorMsg = t('auth.invalidCode');
+            setIsCodeRequired(true);
+          }
 
           setMsg(errorMsg);
           return;
@@ -105,6 +119,21 @@ export const Login = (): ReactElement => {
               placeholder={t('auth.placeholderPassword')}
             />
           </Form.Item>
+
+          {isCodeRequired && (
+            <Form.Item
+              name="code"
+              rules={[{ required: true, message: t('auth.noEmptyCode'), min: 1 }]}
+            >
+              <Input
+                prefix={<SafetyOutlined />}
+                autoFocus
+                autoComplete="one-time-code"
+                inputMode="numeric"
+                placeholder={t('auth.placeholderCode')}
+              />
+            </Form.Item>
+          )}
 
           <div className="pb-1 text-red-500">{msg}</div>
 

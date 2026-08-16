@@ -1,11 +1,29 @@
 import { http } from '@/lib/http';
 
-export function login(username: string, password: string) {
+export function login(username: string, password: string, code?: string) {
   const data = {
     username,
-    password
+    password,
+    ...(code ? { code } : {})
   };
   return http.post('/api/auth/login', data);
+}
+
+// two-factor authentication
+export function getTotp() {
+  return http.get('/api/auth/totp');
+}
+
+export function setupTotp() {
+  return http.post('/api/auth/totp/setup');
+}
+
+export function enableTotp(code: string) {
+  return http.post('/api/auth/totp/enable', { code });
+}
+
+export function disableTotp(password: string, code: string) {
+  return http.post('/api/auth/totp/disable', { password, code });
 }
 
 export function logout() {
