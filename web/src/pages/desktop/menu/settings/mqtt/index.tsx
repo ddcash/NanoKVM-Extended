@@ -6,6 +6,8 @@ import { useTranslation } from 'react-i18next';
 import * as api from '@/api/mqtt.ts';
 import type { MqttCommand } from '@/api/mqtt.ts';
 
+import { Camera } from './camera.tsx';
+
 const emptyConfig = {
   enabled: false,
   broker: '',
@@ -236,6 +238,10 @@ export const Mqtt = () => {
           <span className="text-xs text-neutral-500">{t('settings.mqtt.haPrefixDesc')}</span>
         </div>
       </div>
+
+      <Divider className="opacity-50" style={{ margin: '32px 0' }} />
+
+      <Camera />
 
       <div className="mt-6">
         <Button type="primary" loading={isLoading} onClick={save}>

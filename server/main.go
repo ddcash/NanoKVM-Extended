@@ -13,6 +13,7 @@ import (
 	"NanoKVM-Server/logger"
 	"NanoKVM-Server/middleware"
 	"NanoKVM-Server/router"
+	"NanoKVM-Server/service/camera"
 	"NanoKVM-Server/service/mqtt"
 	"NanoKVM-Server/service/vm"
 	"NanoKVM-Server/service/vm/jiggler"
@@ -73,6 +74,9 @@ func run() {
 	}
 
 	router.Init(r)
+
+	// Restore camera access, if it was enabled.
+	camera.ApplyStored()
 
 	// Home Assistant discovery, if configured. No-op otherwise.
 	go mqtt.StartBridge()
