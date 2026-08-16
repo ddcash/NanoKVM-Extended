@@ -40,7 +40,7 @@ jobs:
       # the pure-Go packages, which is enough to catch type and import errors.
       - name: Type-check pure Go packages
         working-directory: server
-        run: go build ./service/mqtt/... ./service/hid/... ./service/auth/... ./service/switcher/... ./middleware/... ./proto/...
+        run: go build ./service/mqtt/... ./service/hid/... ./service/auth/... ./service/switcher/... ./service/vm/... ./middleware/... ./proto/...
       - name: Vet full tree (may fail to link riscv64 libs)
         working-directory: server
         run: go vet ./service/... ./router/... ./proto/... ./middleware/... 2>&1 || true
