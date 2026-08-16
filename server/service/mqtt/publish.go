@@ -80,6 +80,11 @@ func publish(cfg *Config, topic string, payload string) error {
 	opts.SetConnectTimeout(connectTimeout)
 	opts.SetConnectRetry(false)
 	opts.SetAutoReconnect(false)
+	if cfg.Tls {
+		// Certificates are still verified against the system roots; this only
+		// refuses to negotiate anything older than TLS 1.2.
+		opts.SetTLSConfig(&tls.Config{MinVersion: tls.VersionTLS12})
+	}
 	if cfg.Username != "" {
 		opts.SetUsername(cfg.Username)
 		opts.SetPassword(cfg.Password)

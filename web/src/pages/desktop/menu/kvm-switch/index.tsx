@@ -21,14 +21,16 @@ export const KvmSwitch = () => {
       return;
     }
 
-    getMqttConfig().then((rsp: any) => {
-      if (rsp.code !== 0) return;
-      setEnabled(!!rsp.data?.enabled);
-      setCommands(rsp.data?.commands || []);
-    }).catch((error) => {
-      console.error('Failed to load MQTT config:', error);
-      setLog('Failed to load configuration');
-    });
+    getMqttConfig()
+      .then((rsp: any) => {
+        if (rsp.code !== 0) return;
+        setEnabled(!!rsp.data?.enabled);
+        setCommands(rsp.data?.commands || []);
+      })
+      .catch((error) => {
+        console.error('Failed to load MQTT config:', error);
+        setLog('Failed to load configuration');
+      });
   }
 
   function send(name: string) {

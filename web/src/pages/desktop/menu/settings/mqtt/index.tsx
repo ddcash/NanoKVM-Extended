@@ -26,13 +26,16 @@ export const Mqtt = () => {
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    api.getMqttConfig().then((rsp: any) => {
-      if (rsp.code !== 0) return;
-      setConfig({ ...emptyConfig, ...rsp.data });
-    }).catch((error) => {
-      console.error('Failed to load MQTT config:', error);
-      message.error('Failed to load MQTT configuration');
-    });
+    api
+      .getMqttConfig()
+      .then((rsp: any) => {
+        if (rsp.code !== 0) return;
+        setConfig({ ...emptyConfig, ...rsp.data });
+      })
+      .catch((error) => {
+        console.error('Failed to load MQTT config:', error);
+        message.error('Failed to load MQTT configuration');
+      });
   }, []);
 
   function update(patch: Partial<typeof emptyConfig>) {
