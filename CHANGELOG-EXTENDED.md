@@ -27,6 +27,29 @@ What it contains:
 Before reviving it: H.265 over WebRTC works only in Chrome 136+ and Safari 18+. Firefox does
 not support it and has stated it will not.
 
+## 2.13.0
+
+### Changed
+
+- **Nothing contacts a third party unless asked.** An audit of every outbound endpoint found
+  three that reached out on their own:
+
+  - **STUN was set to `stun.l.google.com` and contacted on every WebRTC session.** On a LAN, or
+    over a VPN, the host candidates are sufficient, so it now defaults to disabled. Set a
+    server in the config if this device has to traverse NAT.
+  - **The legacy `update-nanokvm.py` still fetched Sipeed's CDN.** `new_app_init()` copies that
+    script to `/etc/kvm/`, so it stays on the device and would have pulled a stock build over
+    this firmware.
+  - **The update settings page carried its own idea of the official server**, which no longer
+    matched the firmware's, so the built-in default was displayed as a custom server.
+
+  Tailscale and PicoClaw download URLs are unchanged: nothing is fetched unless those
+  components are installed, and upstream is where they come from. The Sipeed community links on
+  the About page are ordinary links and issue no request unless clicked.
+
+  Still outstanding: `ntpd` runs from the base image rather than from anything in this
+  repository, so it uses whatever pool that image ships.
+
 ## 2.12.0
 
 ### Changed
