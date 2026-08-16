@@ -10,6 +10,11 @@ export function wol(mac: string) {
   return http.post('/api/network/wol', data);
 }
 
+// add a device without waking it
+export function addWolMac(mac: string) {
+  return http.post('/api/network/wol/mac', { mac });
+}
+
 // get wake-on-lan macs history
 export function getWolMacs() {
   return http.get('/api/network/wol/mac');

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Button, Divider, Input, InputNumber, message, Tag } from 'antd';
-import { PlusIcon, Trash2Icon } from 'lucide-react';
+import { ChevronDownIcon, ChevronUpIcon, PlusIcon, Trash2Icon } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
 import * as api from '@/api/switcher.ts';
@@ -117,6 +117,23 @@ export const Switcher = () => {
     setTargets((prev) => [...prev, { id: `t${Date.now()}${prev.length}`, name: '', steps: [] }]);
   }
 
+  // Buttons rather than drag and drop: the order is short, and this works the
+  // same on touch as with a mouse.
+  function move(index: number, delta: number) {
+    const next = index + delta;
+    if (next < 0 || next >= targets.length) return;
+
+    setTargets((prev) => {
+      const reordered = [...prev];
+      [reordered[index], reordered[next]] = [reordered[next], reordered[index]];
+      return reordered;
+    });
+
+    // Keep recording pointed at the same row after it moves.
+    if (recordingIndex === index) setRecordingIndex(next);
+    else if (recordingIndex === next) setRecordingIndex(index);
+  }
+
   function removeTarget(index: number) {
     if (recordingIndex === index) setRecordingIndex(null);
     setTargets((prev) => prev.filter((_, i) => i !== index));
@@ -200,6 +217,18 @@ export const Switcher = () => {
                   ? t('settings.switcher.stopRecording')
                   : t('settings.switcher.record')}
               </Button>
+              <Button
+                icon={<ChevronUpIcon size={14} />}
+                disabled={index === 0}
+                title={t('settings.switcher.moveUp')}
+                onClick={() => move(index, -1)}
+              />
+              <Button
+                icon={<ChevronDownIcon size={14} />}
+                disabled={index === targets.length - 1}
+                title={t('settings.switcher.moveDown')}
+                onClick={() => move(index, 1)}
+              />
               <Button danger icon={<Trash2Icon size={14} />} onClick={() => removeTarget(index)} />
             </div>
 

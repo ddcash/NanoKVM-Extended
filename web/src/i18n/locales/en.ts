@@ -259,6 +259,10 @@ const en = {
     },
     wol: {
       title: 'Wake-on-LAN',
+      save: 'Save',
+      saveTip: 'Add this device to the list without waking it',
+      saving: 'Saving...',
+      saved: 'Device saved',
       sending: 'Sending command...',
       sent: 'Command sent',
       input: 'Please enter the MAC',
@@ -314,6 +318,10 @@ const en = {
         desc: 'Give each machine behind the switch a name and record the hotkey that selects it. Named targets appear as buttons in the KVM Switch menu.',
         targets: 'Targets',
         addTarget: 'Add',
+        moveUp: 'Move up',
+        moveDown: 'Move down',
+        orderDesc:
+          'The order here is the order the buttons appear in the menu and in Home Assistant.',
         namePlaceholder: 'Name, e.g. Desktop',
         record: 'Record keys',
         stopRecording: 'Stop',

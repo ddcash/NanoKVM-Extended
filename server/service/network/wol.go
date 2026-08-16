@@ -322,3 +322,33 @@ func formatWolMacLine(mac string, name string) string {
 func sanitizeWolMacName(name string) string {
 	return strings.Join(strings.Fields(name), " ")
 }
+
+// AddMac saves a device without sending a packet to it.
+//
+// Until now an address only appeared in the list after being woken at least
+// once, because saveMac ran as a side effect of WakeOnLAN. That made the list a
+// history rather than something that could be set up in advance, so a machine
+// had to be woken by hand the first time before it could be clicked.
+func (s *Service) AddMac(c *gin.Context) {
+	var req proto.SetMacNameReq
+	var rsp proto.Response
+
+	if err := proto.ParseFormRequest(c, &req); err != nil {
+		rsp.ErrRsp(c, -1, "invalid arguments")
+		return
+	}
+
+	mac, err := parseMAC(req.Mac)
+	if err != nil {
+		rsp.ErrRsp(c, -2, "invalid MAC address")
+		return
+	}
+
+	// Only the address is stored here. Naming rewrites the whole file, which
+	// SetMacName already does, so the UI makes that call separately rather
+	// than having that logic exist in two places.
+	saveMac(mac)
+
+	rsp.OkRsp(c)
+	log.Debugf("added wol device %s", mac)
+}

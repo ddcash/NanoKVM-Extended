@@ -6,7 +6,7 @@ import { useSetAtom } from 'jotai';
 import { Eye, EyeClosed, NetworkIcon, Pencil, SendIcon, Trash2Icon } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
-import { deleteWolMac, getWolMacs, setWolMacName, wol } from '@/api/network.ts';
+import { addWolMac, deleteWolMac, getWolMacs, setWolMacName, wol } from '@/api/network.ts';
 import { keyboardLockAtom } from '@/jotai/keyboard.ts';
 import { MenuItem } from '@/components/menu-item.tsx';
 
@@ -132,6 +132,35 @@ export const Wol = () => {
       });
   }
 
+  // Saving without waking: previously an address only joined the list as a
+  // side effect of waking it, so a machine had to be woken by hand once before
+  // it could be clicked.
+  function save() {
+    const value = input.trim();
+    if (!value) return;
+
+    setStatus('loading');
+    setLog(t('wol.saving'));
+
+    addWolMac(value)
+      .then((rsp) => {
+        if (rsp.code !== 0) {
+          setStatus('failed');
+          setLog(rsp.msg);
+          return;
+        }
+
+        setStatus('success');
+        setLog(t('wol.saved'));
+        getMacs();
+        setInput('');
+      })
+      .catch(() => {
+        setStatus('failed');
+        setLog(t('auth.error'));
+      });
+  }
+
   const content = (
     <div className="min-w-[300px]">
       <div className="flex items-center justify-between px-1">
@@ -149,6 +178,9 @@ export const Wol = () => {
             onChange={handleChange}
             onPressEnter={() => wake()}
           />
+          <Button onClick={save} title={t('wol.saveTip')}>
+            {t('wol.save')}
+          </Button>
           <Button type="primary" onClick={() => wake()}>
             {t('wol.ok')}
           </Button>
