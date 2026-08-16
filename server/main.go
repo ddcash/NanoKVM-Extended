@@ -66,6 +66,7 @@ func run() {
 	gin.SetMode(gin.ReleaseMode)
 	r := gin.New()
 	r.Use(gin.Recovery())
+	r.Use(middleware.SecurityHeaders(conf.Proto == "https"))
 	if conf.Authentication == "disable" {
 		r.Use(cors.AllowAll())
 	}

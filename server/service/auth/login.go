@@ -27,6 +27,7 @@ func (s *Service) Login(c *gin.Context) {
 	clientIP := GetClientIP(c)
 	if locked, code, msg := CheckLoginAttempt(clientIP); locked {
 		time.Sleep(3 * time.Second)
+		AuditFailure(c, "login", "locked out")
 		rsp.ErrRsp(c, code, msg)
 		return
 	}
@@ -40,6 +41,8 @@ func (s *Service) Login(c *gin.Context) {
 	if ok := CompareAccount(req.Username, req.Password); !ok {
 		time.Sleep(2 * time.Second)
 
+		AuditFailure(c, "login", "invalid credentials")
+
 		if locked, code, msg := RecordLoginFailure(clientIP); locked {
 			rsp.ErrRsp(c, code, msg)
 			return
@@ -50,6 +53,7 @@ func (s *Service) Login(c *gin.Context) {
 	}
 
 	ClearLoginAttempt(clientIP)
+	Audit(c, "login", log.Fields{"username": req.Username})
 
 	token, err := middleware.GenerateJWT(req.Username)
 	if err != nil {

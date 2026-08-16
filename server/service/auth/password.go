@@ -48,6 +48,8 @@ func (s *Service) ChangePassword(c *gin.Context) {
 		return
 	}
 
+	Audit(c, "password_change", log.Fields{"username": req.Username})
+
 	rsp.OkRsp(c)
 	log.Debugf("change password success, username: %s", req.Username)
 }

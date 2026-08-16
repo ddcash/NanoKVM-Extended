@@ -50,15 +50,25 @@ func SetAccount(username string, hashedPassword string) error {
 		return err
 	}
 
-	err = os.MkdirAll(filepath.Dir(AccountFile), 0o644)
+	// 0o644 on a directory leaves it non-traversable: a directory needs the
+	// execute bit to be entered at all.
+	err = os.MkdirAll(filepath.Dir(AccountFile), 0o755)
 	if err != nil {
 		log.Errorf("create directory %s failed: %s", AccountFile, err)
 		return err
 	}
 
-	err = os.WriteFile(AccountFile, account, 0o644)
+	// Holds the bcrypt hash of the admin password, so it must not be
+	// world-readable.
+	err = os.WriteFile(AccountFile, account, 0o600)
 	if err != nil {
 		log.Errorf("write password failed: %s", err)
+		return err
+	}
+	// WriteFile does not change the mode of a file that already exists, so an
+	// account written by an earlier build keeps its 0o644 until tightened here.
+	if err := os.Chmod(AccountFile, 0o600); err != nil {
+		log.Errorf("tighten password file permissions failed: %s", err)
 		return err
 	}
 
