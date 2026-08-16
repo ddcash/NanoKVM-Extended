@@ -3,6 +3,7 @@ import { Badge, Modal, Tooltip } from 'antd';
 import clsx from 'clsx';
 import { useSetAtom } from 'jotai';
 import {
+  ActivityIcon,
   BadgeInfoIcon,
   BotIcon,
   CircleArrowUpIcon,
@@ -31,6 +32,7 @@ import { Device } from './device';
 import { MCP } from './mcp';
 import { Mqtt } from './mqtt';
 import { Network } from './network';
+import { Resources } from './resources';
 import { Switcher } from './switcher';
 import { Tailscale } from './tailscale';
 import { Update } from './update';
@@ -52,6 +54,7 @@ export const Settings = () => {
     { id: 'appearance', icon: <PaletteIcon size={16} />, component: <Appearance /> },
     { id: 'device', icon: <SmartphoneIcon size={16} />, component: <Device /> },
     { id: 'network', icon: <NetworkIcon size={16} />, component: <Network /> },
+    { id: 'resources', icon: <ActivityIcon size={16} />, component: <Resources /> },
     { id: 'switcher', icon: <MonitorIcon size={16} />, component: <Switcher /> },
     { id: 'mqtt', icon: <RadioIcon size={16} />, component: <Mqtt /> },
     { id: 'mcp', icon: <BotIcon size={16} />, component: <MCP /> },

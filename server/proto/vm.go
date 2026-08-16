@@ -152,3 +152,21 @@ type GetWebTitleRsp struct {
 type SetTlsReq struct {
 	Enabled bool `validate:"omitempty"`
 }
+
+type GetResourcesRsp struct {
+	CpuPercent float64 `json:"cpuPercent"`
+	// MemAvailable rather than MemFree: the kernel keeps most of the remainder
+	// as reclaimable cache, so MemFree looks alarming while nothing is wrong.
+	MemoryTotal     uint64  `json:"memoryTotal"`
+	MemoryAvailable uint64  `json:"memoryAvailable"`
+	MemoryPercent   float64 `json:"memoryPercent"`
+	DiskTotal       uint64  `json:"diskTotal"`
+	DiskFree        uint64  `json:"diskFree"`
+	DiskPercent     float64 `json:"diskPercent"`
+	Load1           float64 `json:"load1"`
+	Load5           float64 `json:"load5"`
+	Load15          float64 `json:"load15"`
+	// Degrees Celsius, or 0 when the SoC exposes no thermal zone.
+	Temperature   float64 `json:"temperature"`
+	UptimeSeconds int64   `json:"uptimeSeconds"`
+}

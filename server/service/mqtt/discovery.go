@@ -34,6 +34,32 @@ func publishDiscovery(client paho.Client, cfg *Config) {
 	}
 	publishEntity(client, cfg, "binary_sensor", "hdmi", hdmi)
 
+	// Resource sensors, so the device can be watched from Home Assistant and
+	// alerted on if it starts running hot or short of space.
+	for _, sensor := range []struct {
+		id, name, unit, deviceClass, icon string
+	}{
+		{"cpu", "CPU", "%", "", "mdi:cpu-64-bit"},
+		{"memory", "Memory", "%", "", "mdi:memory"},
+		{"disk", "SD card", "%", "", "mdi:sd"},
+		{"temperature", "Temperature", "°C", "temperature", ""},
+		{"load1", "Load average", "", "", "mdi:gauge"},
+	} {
+		entity := &haEntity{
+			Name:              sensor.name,
+			UniqueId:          node + "_" + sensor.id,
+			Device:            dev,
+			AvailabilityTopic: avail,
+			StateTopic:        base + "/" + sensor.id,
+			UnitOfMeasurement: sensor.unit,
+			DeviceClass:       sensor.deviceClass,
+			Icon:              sensor.icon,
+			StateClass:        "measurement",
+			EntityCategory:    "diagnostic",
+		}
+		publishEntity(client, cfg, "sensor", sensor.id, entity)
+	}
+
 	publishSwitcherButtons(client, cfg, dev, avail, base, node)
 }
 

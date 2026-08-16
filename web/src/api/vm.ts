@@ -169,3 +169,22 @@ export function setTLS(enabled: boolean) {
 export function reboot() {
   return http.post('/api/vm/system/reboot');
 }
+
+export type Resources = {
+  cpuPercent: number;
+  memoryTotal: number;
+  memoryAvailable: number;
+  memoryPercent: number;
+  diskTotal: number;
+  diskFree: number;
+  diskPercent: number;
+  load1: number;
+  load5: number;
+  load15: number;
+  temperature: number;
+  uptimeSeconds: number;
+};
+
+export function getResources() {
+  return http.get('/api/vm/resources');
+}

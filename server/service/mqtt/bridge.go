@@ -2,6 +2,7 @@ package mqtt
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -11,6 +12,7 @@ import (
 
 	"NanoKVM-Server/common"
 	"NanoKVM-Server/service/switcher"
+	"NanoKVM-Server/service/vm"
 )
 
 // The bridge keeps one connection open, unlike the fire-and-forget publish used
@@ -179,4 +181,17 @@ func publishState(client paho.Client, cfg *Config) {
 		hdmi = payloadOnline
 	}
 	client.Publish(base+"/hdmi", 0, true, hdmi)
+
+	res := vm.ReadResources()
+	client.Publish(base+"/cpu", 0, true, formatFloat(res.CpuPercent))
+	client.Publish(base+"/memory", 0, true, formatFloat(res.MemoryPercent))
+	client.Publish(base+"/disk", 0, true, formatFloat(res.DiskPercent))
+	client.Publish(base+"/load1", 0, true, formatFloat(res.Load1))
+	if res.Temperature > 0 {
+		client.Publish(base+"/temperature", 0, true, formatFloat(res.Temperature))
+	}
+}
+
+func formatFloat(value float64) string {
+	return strconv.FormatFloat(value, 'f', 1, 64)
 }

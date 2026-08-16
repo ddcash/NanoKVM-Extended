@@ -38,6 +38,9 @@ type haEntity struct {
 	DeviceClass       string   `json:"device_class,omitempty"`
 	EntityCategory    string   `json:"entity_category,omitempty"`
 	PayloadPress      string   `json:"payload_press,omitempty"`
+	UnitOfMeasurement string   `json:"unit_of_measurement,omitempty"`
+	StateClass        string   `json:"state_class,omitempty"`
+	SuggestedPrecision int     `json:"suggested_display_precision,omitempty"`
 	Topic             string   `json:"topic,omitempty"`
 	ImageEncoding     string   `json:"image_encoding,omitempty"`
 	ValueTemplate     string   `json:"value_template,omitempty"`

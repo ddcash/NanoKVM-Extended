@@ -296,6 +296,19 @@ const en = {
     },
     settings: {
       title: 'Settings',
+      resources: {
+        title: 'Resources',
+        cpu: 'CPU',
+        memory: 'Memory',
+        memoryNote:
+          'Most of what is not in use is kept as reclaimable cache, so a high figure here is normal.',
+        disk: 'SD card',
+        temperature: 'Temperature',
+        load: 'Load average',
+        loadTip:
+          'Runnable and waiting tasks over 1, 5 and 15 minutes. This device has a single core, so sustained values above 1 mean work is queuing.',
+        uptime: 'Uptime'
+      },
       switcher: {
         title: 'KVM Switch',
         desc: 'Give each machine behind the switch a name and record the hotkey that selects it. Named targets appear as buttons in the KVM Switch menu.',
