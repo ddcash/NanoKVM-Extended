@@ -12,29 +12,28 @@ import (
 // upgrade handshake only, never on the frames that follow, so nothing here sits
 // on the latency-sensitive path.
 //
-// HSTS is deliberately not enabled by default. The device presents a
-// self-signed certificate on a private address, and an HSTS entry pinned in the
-// browser for a host that later serves plain HTTP locks the UI out with no
-// obvious way back.
+// There is deliberately no script-src or style-src policy. The frontend and its
+// dependencies inject inline <script> and <style> at runtime, so any policy
+// tight enough to be worth having would have to be built from per-build hashes
+// or a nonce; a blanket 'unsafe-inline' would allow exactly what script-src
+// exists to prevent, while still breaking on the next dependency that inlines
+// something. The headers kept below are the ones that protect this device
+// without depending on how the bundle is emitted.
+//
+// HSTS is also omitted: the device presents a self-signed certificate on a
+// private address, and an HSTS entry pinned in the browser for a host that
+// later serves plain HTTP locks the UI out with no obvious way back.
 func SecurityHeaders(isTLS bool) gin.HandlerFunc {
 	options := secure.Options{
+		// Clickjacking protection, which is the realistic web threat to a
+		// device that can control a machine's keyboard and mouse.
 		FrameDeny:          true,
 		ContentTypeNosniff: true,
 		ReferrerPolicy:     "same-origin",
-		// The frontend is served from the same origin as the API. Inline styles
-		// and blobs are required: antd injects <style> at runtime, and the H.264
-		// player builds its stream from blob URLs.
-		ContentSecurityPolicy: "default-src 'self'; " +
-			"img-src 'self' data: blob:; " +
-			"media-src 'self' data: blob:; " +
-			"style-src 'self' 'unsafe-inline'; " +
-			"script-src 'self' 'wasm-unsafe-eval'; " +
-			"connect-src 'self' ws: wss:; " +
-			"worker-src 'self' blob:; " +
-			"frame-ancestors 'none'; " +
-			"base-uri 'self'; " +
-			"form-action 'self'",
-		IsDevelopment: !isTLS,
+		// frame-ancestors is the modern equivalent of FrameDeny and, unlike
+		// script-src, cannot be tripped by inlined bundle output.
+		ContentSecurityPolicy: "frame-ancestors 'none'; base-uri 'self'; form-action 'self'",
+		IsDevelopment:         !isTLS,
 	}
 
 	secureMiddleware := secure.New(options)
