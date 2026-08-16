@@ -57,11 +57,23 @@ jobs:
       ref: ${{ needs.validate.outputs.source_sha }}
       version: ${{ inputs.tag }}
 
+  sd_image:
+    name: Build SD image
+    needs: package
+    if: inputs.release_action != 'promote-stable'
+    permissions:
+      contents: read
+    uses: ./.github/workflows/sd-image.yml
+    with:
+      artifact_name: ${{ needs.package.outputs.artifact_name }}
+      version: ${{ inputs.tag }}
+
   publish:
     name: Publish GitHub release
     needs:
       - validate
       - package
+      - sd_image
     if: inputs.release_action != 'promote-stable'
     runs-on: ubuntu-latest
     permissions:
@@ -79,6 +91,12 @@ jobs:
         with:
           name: ${{ needs.package.outputs.artifact_name }}
           path: build/release
+
+      - name: Download SD image artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ needs.sd_image.outputs.image_artifact }}
+          path: build/image
 
       - name: Publish release
         env:
@@ -137,7 +155,10 @@ jobs:
             '' \
             "    ${SHA512}" \
             '' \
-            'To offer this build over OTA, publish it through the separate CDN workflow.')
+            '### Installing' \
+            '' \
+            "- OTA: point the device's update server at this repository and use the built-in updater." \
+            "- From scratch: flash \`nanokvm_${TAG}.img.xz\` to an SD card with Etcher or dd.")
 
           STATE_ARGS=(--prerelease="$IS_PRERELEASE")
           if [ "$IS_PRERELEASE" = true ]; then
@@ -150,7 +171,8 @@ jobs:
             --title "nanokvm@${TAG}" \
             --notes "$NOTES" \
             "${STATE_ARGS[@]}" \
-            "$TARBALL" build/release/latest.json build/release/sha256.txt
+            "$TARBALL" build/release/latest.json build/release/sha256.txt \
+            "build/image/nanokvm_${TAG}.img.xz"
 
       - name: Summary
         env:
@@ -202,7 +224,8 @@ jobs:
 
           CURRENT_ASSETS=$(jq -r '.assets[].name' <<< "$RELEASE_JSON" | LC_ALL=C sort)
           EXPECTED_ASSETS=$(printf '%s\n' \
-            latest.json "nanokvm_${TAG}.tar.gz" sha256.txt | LC_ALL=C sort)
+            latest.json "nanokvm_${TAG}.tar.gz" "nanokvm_${TAG}.img.xz" sha256.txt \
+            | LC_ALL=C sort)
           if [ "$CURRENT_ASSETS" != "$EXPECTED_ASSETS" ]; then
             echo "::error::release '$TAG' does not have the exact expected asset set"
             exit 1

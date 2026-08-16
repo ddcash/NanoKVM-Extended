@@ -1,0 +1,214 @@
+name: NanoKVM SD Image
+
+# Builds a full flashable SD card image by taking the upstream Sipeed base
+# image and replacing its /kvmapp with this fork's build.
+#
+# Sipeed publishes on two separate release tracks: numeric tags (2.5.0) carry
+# the OTA tarball, while v-prefixed tags (v1.4.3) carry the full .img. Only the
+# latter contains the bootloader, kernel and rootfs, so it is the base here.
+#
+# This consumes the artifact produced by package.yml rather than rebuilding, so
+# the .img.xz and the OTA tarball are always built from identical binaries.
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Version being imaged, e.g. 2.5.1
+        required: true
+        type: string
+      artifact_name:
+        description: Actions artifact from the Package workflow
+        required: true
+        type: string
+      base_image_tag:
+        description: Upstream v-prefixed tag to use as the base image
+        required: false
+        default: v1.4.3
+        type: string
+  workflow_call:
+    inputs:
+      version:
+        required: true
+        type: string
+      artifact_name:
+        required: true
+        type: string
+      base_image_tag:
+        required: false
+        default: v1.4.3
+        type: string
+    outputs:
+      image_artifact:
+        description: Artifact containing the .img.xz
+        value: ${{ jobs.image.outputs.image_artifact }}
+
+concurrency:
+  group: sd-image-${{ inputs.version }}
+  cancel-in-progress: false
+
+jobs:
+  image:
+    name: Build SD image
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    outputs:
+      image_artifact: ${{ steps.names.outputs.image_artifact }}
+    permissions:
+      contents: read
+
+    steps:
+      - name: Resolve names
+        id: names
+        env:
+          BASE_TAG: ${{ inputs.base_image_tag }}
+          VERSION: ${{ inputs.version }}
+        run: |
+          if ! echo "$VERSION" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+$'; then
+            echo "::error::invalid version '$VERSION', expected MAJOR.MINOR.PATCH"
+            exit 1
+          fi
+          # Used to build a download URL, so keep it to a plain tag shape.
+          if ! echo "$BASE_TAG" | grep -qE '^v[0-9]+\.[0-9]+\.[0-9]+$'; then
+            echo "::error::invalid base image tag '$BASE_TAG', expected vMAJOR.MINOR.PATCH"
+            exit 1
+          fi
+          {
+            echo "image_artifact=nanokvm-sdimage-${VERSION}-run-${GITHUB_RUN_ID}-attempt-${GITHUB_RUN_ATTEMPT}"
+            echo "image_name=nanokvm_${VERSION}.img"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Free up disk space
+        run: |
+          df -h /
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc
+          df -h /
+
+      - name: Restore cached base image
+        id: base-cache
+        uses: actions/cache@v4
+        with:
+          path: base-image
+          key: nanokvm-base-${{ inputs.base_image_tag }}
+
+      - name: Download base image
+        if: steps.base-cache.outputs.cache-hit != 'true'
+        env:
+          BASE_TAG: ${{ inputs.base_image_tag }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p base-image
+          # The base image comes from upstream, which is public, so this needs
+          # no credentials beyond the default token's public read access.
+          gh release download "$BASE_TAG" \
+            --repo sipeed/NanoKVM \
+            --dir base-image \
+            --pattern '*.img*'
+          ls -lh base-image
+
+      - name: Unpack base image
+        run: |
+          set -euo pipefail
+          cd base-image
+          # On a cache hit base.img is already the unpacked image.
+          if [ ! -f base.img ]; then
+            # v1.4.3 ships a raw .img; earlier tags ship .img.xz.
+            src=$(find . -maxdepth 1 \( -name '*.img.xz' -o -name '*.img' \) | head -1)
+            if [ -z "$src" ]; then
+              echo "::error::no .img or .img.xz found in the base image release"
+              exit 1
+            fi
+            case "$src" in
+              *.xz) xz -dc "$src" > base.img && rm -f "$src" ;;
+              *)    mv "$src" base.img ;;
+            esac
+          fi
+          ls -lh base.img
+
+      - name: Download fork package
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ inputs.artifact_name }}
+          path: package
+
+      - name: Graft fork build onto the image
+        env:
+          IMAGE_NAME: ${{ steps.names.outputs.image_name }}
+          VERSION: ${{ inputs.version }}
+        run: |
+          set -euo pipefail
+
+          tarball=$(find package -name "nanokvm_${VERSION}.tar.gz" | head -1)
+          if [ -z "$tarball" ]; then
+            echo "::error::nanokvm_${VERSION}.tar.gz not found in the package artifact"
+            exit 1
+          fi
+
+          cp base-image/base.img "$IMAGE_NAME"
+
+          loop=$(sudo losetup --show --find --partscan "$IMAGE_NAME")
+          echo "attached $loop"
+          cleanup() {
+            sudo umount mnt 2>/dev/null || true
+            sudo losetup -d "$loop" 2>/dev/null || true
+          }
+          trap cleanup EXIT
+
+          mkdir -p mnt
+
+          # Find the partition holding /kvmapp rather than assuming an index,
+          # so a base image with a different layout fails loudly instead of
+          # silently producing an image with the stock firmware.
+          target=""
+          for part in "$loop"p*; do
+            sudo mount "$part" mnt 2>/dev/null || continue
+            if [ -d mnt/kvmapp ]; then
+              target="$part"
+              echo "found /kvmapp on $part"
+              break
+            fi
+            sudo umount mnt
+          done
+          if [ -z "$target" ]; then
+            echo "::error::no partition in the base image contains /kvmapp"
+            exit 1
+          fi
+
+          # install.go replaces /kvmapp wholesale with the tarball's single
+          # root directory; do the same here so an offline flash and an OTA
+          # update converge on identical contents.
+          staging=$(mktemp -d)
+          tar -xzf "$tarball" -C "$staging"
+          payload=$(find "$staging" -mindepth 1 -maxdepth 1 -type d | head -1)
+          if [ -z "$payload" ]; then
+            echo "::error::tarball did not contain a single root directory"
+            exit 1
+          fi
+
+          sudo rm -rf mnt/kvmapp
+          sudo cp -a "$payload" mnt/kvmapp
+          sudo sync
+
+          echo "installed version: $(sudo cat mnt/kvmapp/version 2>/dev/null || echo unknown)"
+          sudo umount mnt
+          trap - EXIT
+          sudo losetup -d "$loop"
+
+      - name: Compress image
+        env:
+          IMAGE_NAME: ${{ steps.names.outputs.image_name }}
+        run: |
+          xz -T0 -6 "$IMAGE_NAME"
+          sha256sum "${IMAGE_NAME}.xz" > sha256-image.txt
+          ls -lh "${IMAGE_NAME}.xz"
+          cat sha256-image.txt
+
+      - name: Upload image
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.names.outputs.image_artifact }}
+          path: |
+            ${{ steps.names.outputs.image_name }}.xz
+            sha256-image.txt
+          if-no-files-found: error
+          retention-days: 14

@@ -142,7 +142,6 @@ jobs:
         run: make web
 
       - name: Log in to GHCR
-        if: github.event_name != 'pull_request'
         env:
           GHCR_USER: ${{ github.actor }}
           GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -182,7 +181,7 @@ jobs:
             sleep 15
           done
           if [ "$ok" -ne 1 ]; then
-            echo "::error::could not pull $TAGGED_REF - run the 'Builder Image' workflow first and ensure PR builds can pull it without credentials"
+            echo "::error::could not pull $TAGGED_REF - run the 'Builder Image' workflow first"
             exit 1
           fi
           RESOLVED_REF=$(docker image inspect --format='{{index .RepoDigests 0}}' "$TAGGED_REF")
