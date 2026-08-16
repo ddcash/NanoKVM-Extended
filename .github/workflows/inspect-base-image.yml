@@ -1,0 +1,75 @@
+name: Inspect Base Image
+
+# Diagnostic: reports how the stock image wires /etc/init.d to /kvmapp, which
+# determines whether replacing /kvmapp is enough to change what runs at boot.
+
+on:
+  workflow_dispatch:
+    inputs:
+      base_image_tag:
+        required: false
+        default: v1.4.3
+        type: string
+
+jobs:
+  inspect:
+    name: Inspect
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    permissions:
+      contents: read
+
+    steps:
+      - name: Free up disk space
+        run: sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc
+
+      - name: Restore cached base image
+        id: base-cache
+        uses: actions/cache@v4
+        with:
+          path: base-image
+          key: nanokvm-base-${{ inputs.base_image_tag }}
+
+      - name: Download base image
+        if: steps.base-cache.outputs.cache-hit != 'true'
+        env:
+          BASE_TAG: ${{ inputs.base_image_tag }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p base-image
+          gh release download "$BASE_TAG" --repo sipeed/NanoKVM \
+            --dir base-image --pattern '*.img*'
+          cd base-image
+          src=$(find . -maxdepth 1 \( -name '*.img.xz' -o -name '*.img' \) | head -1)
+          case "$src" in
+            *.xz) xz -dc "$src" > base.img && rm -f "$src" ;;
+            *)    mv "$src" base.img ;;
+          esac
+
+      - name: Inspect init.d wiring
+        run: |
+          set -euo pipefail
+          loop=$(sudo losetup --show --find --partscan base-image/base.img)
+          trap 'sudo umount mnt 2>/dev/null || true; sudo losetup -d "$loop" 2>/dev/null || true' EXIT
+          mkdir -p mnt
+
+          for part in "$loop"p*; do
+            sudo mount "$part" mnt 2>/dev/null || continue
+            echo "=== $part ==="
+            sudo ls -la mnt/ | head -25
+            if [ -d mnt/etc/init.d ]; then
+              echo "--- /etc/init.d (S03/S95 entries) ---"
+              sudo ls -la mnt/etc/init.d/ | grep -E "S03|S95|S96" || true
+              echo "--- is S03usbdev a symlink? ---"
+              sudo readlink -f mnt/etc/init.d/S03usbdev || echo "(not a symlink / absent)"
+              echo "--- first line of the running S03usbdev ---"
+              sudo head -3 mnt/etc/init.d/S03usbdev 2>/dev/null || true
+              echo "--- does it gate subclass on /boot/BIOS? ---"
+              sudo grep -n "boot/BIOS" mnt/etc/init.d/S03usbdev || echo "(no /boot/BIOS gate found)"
+            fi
+            if [ -d mnt/kvmapp ]; then
+              echo "--- /kvmapp/version ---"
+              sudo cat mnt/kvmapp/version 2>/dev/null || true
+            fi
+            sudo umount mnt
+          done
