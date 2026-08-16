@@ -2,7 +2,13 @@ package common
 
 /*
 	#cgo CFLAGS: -I../include
-	#cgo LDFLAGS: -L../dl_lib -lkvm
+	// libkvm.so leaves its OpenCV and mmf symbols to the sibling libraries
+	// shipped beside it in dl_lib. Those are found at runtime through the
+	// binary's RPATH but are not on the link path, so the linker rejects the
+	// real library unless undefined symbols in a shared object are permitted.
+	// Without this only a stripped link stub can be used, which caps what the
+	// C API is able to expose.
+	#cgo LDFLAGS: -L../dl_lib -lkvm -Wl,--allow-shlib-undefined
 	#include "kvm_vision.h"
 */
 import "C"
