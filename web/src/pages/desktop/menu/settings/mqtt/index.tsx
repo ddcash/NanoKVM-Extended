@@ -30,7 +30,8 @@ export const Mqtt = () => {
       .getMqttConfig()
       .then((rsp: any) => {
         if (rsp.code !== 0) return;
-        setConfig({ ...emptyConfig, ...rsp.data });
+        // A device on an older build can still return commands as null.
+        setConfig({ ...emptyConfig, ...rsp.data, commands: rsp.data?.commands ?? [] });
       })
       .catch((error) => {
         console.error('Failed to load MQTT config:', error);

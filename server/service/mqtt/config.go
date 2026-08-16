@@ -38,7 +38,9 @@ type Config struct {
 }
 
 func defaultConfig() Config {
-	return Config{Port: 1883}
+	// Commands must never be nil. It is serialised straight to JSON, and a nil
+	// slice marshals to null rather than [], which the UI then maps over.
+	return Config{Port: 1883, Commands: []proto.MqttCommand{}}
 }
 
 func (s *Service) GetConfig(c *gin.Context) {
@@ -81,13 +83,18 @@ func (s *Service) SetConfig(c *gin.Context) {
 		return
 	}
 
+	commands := req.Commands
+	if commands == nil {
+		commands = []proto.MqttCommand{}
+	}
+
 	cfg := Config{
 		Enabled:  *req.Enabled,
 		Broker:   strings.TrimSpace(req.Broker),
 		Port:     req.Port,
 		Username: req.Username,
 		Topic:    strings.TrimSpace(req.Topic),
-		Commands: req.Commands,
+		Commands: commands,
 		Tls:      current.Tls,
 		Password: current.Password,
 	}
@@ -182,6 +189,10 @@ func loadConfig() (Config, error) {
 	cfg := defaultConfig()
 	if err := json.Unmarshal(content, &cfg); err != nil {
 		return Config{}, fmt.Errorf("parse mqtt config: %w", err)
+	}
+	// A file written with "commands": null unmarshals over the default.
+	if cfg.Commands == nil {
+		cfg.Commands = []proto.MqttCommand{}
 	}
 
 	return cfg, nil

@@ -3,7 +3,7 @@ import { AppleOutlined, WindowsOutlined } from '@ant-design/icons';
 import clsx from 'clsx';
 import { useAtom } from 'jotai';
 import { XIcon } from 'lucide-react';
-import Keyboard, { KeyboardButtonTheme } from 'react-simple-keyboard';
+import KeyboardImport, { KeyboardButtonTheme } from 'react-simple-keyboard';
 import { Drawer } from 'vaul';
 
 import 'react-simple-keyboard/build/css/index.css';
@@ -25,6 +25,13 @@ import {
   modifierKeys,
   specialKeyMap
 } from './virtual-keys.ts';
+
+// react-simple-keyboard 3.x is CJS-only (no "module"/"exports"/"type" fields).
+// Under Vite 8's rolldown bundler the default import resolves to the module
+// namespace object rather than the component, which React rejects with
+// "element type is invalid". Unwrap the interop default when it is present.
+const Keyboard = ((KeyboardImport as unknown as { default?: typeof KeyboardImport })?.default ??
+  KeyboardImport) as typeof KeyboardImport;
 
 export const VirtualKeyboard = () => {
   const isBigScreen = useMediaQuery({ minWidth: 850 });
