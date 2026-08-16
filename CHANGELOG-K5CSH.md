@@ -3,6 +3,22 @@
 Changes in this fork relative to upstream [sipeed/NanoKVM](https://github.com/sipeed/NanoKVM).
 Upstream's own changelog remains in [CHANGELOG.md](CHANGELOG.md).
 
+## 2.6.1
+
+### Fixed
+
+- **The Content-Security-Policy added in 2.6.0 blocked the app's own inline scripts**, breaking
+  parts of the UI. `script-src` and `style-src` are removed rather than loosened to
+  `'unsafe-inline'`: a policy permissive enough for inlined bundle output allows exactly what
+  `script-src` exists to prevent, while still breaking on the next dependency that inlines
+  something. Making it strict would require per-build hashes or a nonce threaded through the
+  bundler.
+
+  What remains is what actually protects this device and cannot be tripped by how the bundle
+  is emitted: frame denial and `frame-ancestors` (the realistic threat for something that
+  controls a machine's keyboard and mouse), `nosniff`, a referrer policy, `base-uri` and
+  `form-action`.
+
 ## 2.6.0
 
 ### Added
