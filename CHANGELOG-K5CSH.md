@@ -27,6 +27,14 @@ What it contains:
 Before reviving it: H.265 over WebRTC works only in Chrome 136+ and Safari 18+. Firefox does
 not support it and has stated it will not.
 
+## 2.11.1
+
+### Added
+
+- **A Wake-on-LAN device can be named while it is added.** Saving stored only the address, so
+  naming meant saving first and then editing the entry, which is not obvious from a list of raw
+  MAC addresses. An optional name field now sits beside the address.
+
 ## 2.11.0
 
 ### Fixed
