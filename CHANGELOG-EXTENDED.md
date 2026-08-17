@@ -27,6 +27,38 @@ What it contains:
 Before reviving it: H.265 over WebRTC works only in Chrome 136+ and Safari 18+. Firefox does
 not support it and has stated it will not.
 
+## 2.17.0
+
+### Added
+
+- **Custom GPIO and command actions**, configured in Settings > Actions and triggered from a new
+  menu bar item or from the NanoKVM's own button.
+
+  The device exposes five gpiochips covering 352-511, of which the firmware uses only a handful;
+  the rest were unreachable without a shell. An action drives a pin — high, low, or a pulse of a
+  given length, with an active-low option for the relay boards that need it — or runs a command.
+
+  The pin is left exported after use, because unexporting resets the line and would drop a relay
+  that had just been switched on. Pins the firmware already drives are allowed but labelled:
+  repurposing the ATX power and reset lines is a reasonable thing to want, and refusing it
+  outright would be worse than saying what it does.
+
+  **The NanoKVM has one button, not two.** It is read as `gpio-keys` and told apart by how long
+  it is held, so a short and a long press can run different actions. evdev delivers events to
+  every reader, so watching it here does not take it away from the C++ daemon: OLED paging,
+  Wi-Fi setup and hold-to-reset-password keep working, and a custom action runs alongside them.
+  Suppressing that behaviour would mean changing the daemon, and losing the password reset is
+  not a good trade for a remapped button.
+
+  Commands run under a timeout, so one that never returns cannot pin the single core.
+
+### Not yet included
+
+- **Addressable RGB (WS2812) is not in this release.** It needs precise bit timing that
+  userspace GPIO cannot hold, but the device does expose `/dev/spidev0.0` through `3.0`, and
+  clocking the LED protocol over SPI is the reliable way to do it. That, along with LED count
+  and animations, is worth its own release rather than being rushed in here.
+
 ## 2.16.0
 
 ### Added
