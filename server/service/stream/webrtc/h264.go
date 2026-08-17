@@ -2,6 +2,7 @@ package webrtc
 
 import (
 	"NanoKVM-Server/config"
+	"NanoKVM-Server/service/network"
 	"encoding/json"
 	"net/http"
 	"sync"
@@ -102,9 +103,12 @@ func createICEServers() []webrtc.ICEServer {
 
 	conf := config.GetInstance()
 
-	if conf.Stun != "" && conf.Stun != "disable" {
+	// The stored setting wins over the YAML default, so a STUN server can be
+	// set from the UI without editing a config file.
+	stun := network.StunServer(conf.Stun)
+	if stun != "" && stun != "disable" {
 		iceServers = append(iceServers, webrtc.ICEServer{
-			URLs: []string{"stun:" + conf.Stun},
+			URLs: []string{"stun:" + stun},
 		})
 	}
 

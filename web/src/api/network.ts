@@ -84,3 +84,18 @@ export function getDNS() {
 export function setDNS(mode: DNSMode, servers: string[]) {
   return http.post('/api/network/dns', { mode, servers });
 }
+
+export type TimeSync = {
+  ntpEnabled: boolean;
+  ntpServers: string[];
+  // "disable" means WebRTC uses host candidates only.
+  stun: string;
+};
+
+export function getTimeSync() {
+  return http.get('/api/network/timesync');
+}
+
+export function setTimeSync(config: TimeSync) {
+  return http.post('/api/network/timesync', config);
+}

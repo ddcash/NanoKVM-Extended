@@ -528,6 +528,16 @@ const en = {
         cancelBtn: 'No'
       },
       network: {
+        ntp: 'Network time (NTP)',
+        ntpDesc:
+          'Keeps the clock correct. Turning it off stops the device contacting a time server at all.',
+        ntpServersDesc: 'One server per line.',
+        stun: 'STUN server',
+        stunDesc:
+          'Only needed to reach this device across NAT. Leave empty on a LAN or over a VPN: a STUN request goes out on every video session, and host candidates are enough without it.',
+        timeSave: 'Save',
+        timeSaved: 'Saved',
+        timeSaveFailed: 'Failed to save',
         title: 'Network',
         wifi: {
           title: 'Wi-Fi',

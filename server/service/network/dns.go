@@ -686,34 +686,49 @@ func repairResolvConf() error {
 		return err
 	}
 
-	cleaned, changed := stripInlineComments(string(data))
+	cleaned, changed := sanitizeResolvConf(string(data))
 	if !changed {
 		return nil
 	}
 
-	log.Infof("removing inline comments from %s, which musl cannot parse", etcResolvFile)
+	log.Infof("repairing %s: musl cannot parse inline comments", etcResolvFile)
 	return os.WriteFile(etcResolvFile, []byte(cleaned), 0o644)
 }
 
-// stripInlineComments removes trailing comments while keeping whole-line ones,
-// which are harmless and may carry provenance worth reading.
-func stripInlineComments(content string) (string, bool) {
+// sanitizeResolvConf strips trailing comments and drops duplicate directives.
+// Whole-line comments are kept: they are harmless and may carry provenance.
+func sanitizeResolvConf(content string) (string, bool) {
 	lines := strings.Split(content, "\n")
+	result := make([]string, 0, len(lines))
+	seen := make(map[string]struct{}, len(lines))
 	changed := false
 
-	for i, line := range lines {
+	for _, line := range lines {
 		trimmed := strings.TrimSpace(line)
 		if trimmed == "" || strings.HasPrefix(trimmed, "#") {
+			result = append(result, line)
 			continue
 		}
 
 		if index := strings.Index(line, "#"); index >= 0 {
-			lines[i] = strings.TrimRight(line[:index], " \t")
+			line = strings.TrimRight(line[:index], " \t")
 			changed = true
 		}
+
+		// udhcpc appends rather than replaces, so a device collects a second
+		// copy of every line on each lease renewal, and musl reads only the
+		// first three nameservers it finds.
+		key := strings.Join(strings.Fields(line), " ")
+		if _, duplicate := seen[key]; duplicate {
+			changed = true
+			continue
+		}
+		seen[key] = struct{}{}
+
+		result = append(result, line)
 	}
 
-	return strings.Join(lines, "\n"), changed
+	return strings.Join(result, "\n"), changed
 }
 
 func sameServers(a []string, b []string) bool {

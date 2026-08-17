@@ -56,3 +56,16 @@ type DNSInfo struct {
 	Gateway       string   `json:"gateway"`
 	SearchDomains []string `json:"searchDomains"`
 }
+
+type GetTimeSyncRsp struct {
+	NtpEnabled bool     `json:"ntpEnabled"`
+	NtpServers []string `json:"ntpServers"`
+	// "disable" means WebRTC uses host candidates only.
+	Stun string `json:"stun"`
+}
+
+type SetTimeSyncReq struct {
+	NtpEnabled *bool    `json:"ntpEnabled" form:"ntpEnabled"`
+	NtpServers []string `json:"ntpServers" form:"ntpServers"`
+	Stun       string   `json:"stun" form:"stun"`
+}

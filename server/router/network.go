@@ -16,6 +16,8 @@ func networkRouter(r *gin.Engine) {
 	api := r.Group("/api").Use(middleware.CheckToken())
 
 	api.POST("/network/wol", service.WakeOnLAN)           // wake on lan
+	api.GET("/network/timesync", service.GetTimeSync)     // ntp and stun settings
+	api.POST("/network/timesync", service.SetTimeSync)
 	api.POST("/network/wol/mac", service.AddMac)          // add a device without waking it
 	api.GET("/network/wol/mac", service.GetMac)           // get mac list
 	api.DELETE("/network/wol/mac", service.DeleteMac)     // delete mac

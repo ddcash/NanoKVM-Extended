@@ -78,6 +78,7 @@ func run() {
 
 	// Repair DNS before anything tries to resolve a name.
 	network.EnsureDNSSanity()
+	network.ApplyStoredTimeSync()
 
 	// Restore camera access, if it was enabled.
 	camera.ApplyStored()
