@@ -27,6 +27,39 @@ What it contains:
 Before reviving it: H.265 over WebRTC works only in Chrome 136+ and Safari 18+. Firefox does
 not support it and has stated it will not.
 
+## 2.19.0
+
+### Added
+
+- **Actions are now step sequences**, so one button or menu entry can do something useful
+  rather than a single operation: pulse a relay, wait, then run a command, or drive several
+  pins in order. Steps run in order and stop at the first failure, and the reason names the
+  step that failed instead of reporting a bare "action failed".
+
+  New step types alongside GPIO and command:
+
+  - **Toggle**, which reads a pin and writes the opposite, which is what a light switch wants.
+  - **PWM**, for brightness or fan speed, using the four chips the SoC exposes. Duty is lowered
+    before the period changes and raised afterwards, because sysfs rejects a duty larger than
+    the period it is being written against.
+  - **Wait**, for hardware that needs a gap between operations.
+  - Commands can now run in the background or wait with a configurable timeout.
+
+- **The button understands four events**, not two: short, double, long and very long. The
+  thresholds match the C++ daemon's own (1500 ms and 9000 ms), so a press means the same thing
+  whichever handler reacts. A short press is held back briefly to see whether a second follows,
+  which is the only way to tell a single press from the first half of a double.
+
+  A very long press still resets the password: the daemon's handling is never suppressed, and a
+  custom action runs alongside it.
+
+- **GPIO state can be read**, so a toggle can show whether it is currently on. A pin that has
+  never been driven reports as unknown rather than claiming to be off, since reading it would
+  otherwise export it as a side effect of merely looking.
+
+Actions saved in the previous single-operation form are converted when read, so nothing already
+configured is lost.
+
 ## 2.18.0
 
 ### Fixed
