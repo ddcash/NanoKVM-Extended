@@ -27,6 +27,27 @@ What it contains:
 Before reviving it: H.265 over WebRTC works only in Chrome 136+ and Safari 18+. Firefox does
 not support it and has stated it will not.
 
+## 2.16.0
+
+### Added
+
+- **Active sessions are visible and can be revoked**, in Settings > Account. The token is a JWT
+  and says nothing about whether it is still wanted, so a stolen one stayed valid until it
+  expired and there was no way to see it had been taken.
+
+  Each token now carries a session id and a token whose session is gone is refused. The list
+  shows every signed-in browser with its address and last-seen time, and either one or all of
+  the others can be revoked. Revoking the current session is refused, since that is what logout
+  is for.
+
+  **Everyone signs in once more after this update.** A token issued earlier predates session
+  tracking, and accepting those would leave a way to sidestep revocation entirely.
+
+  The check runs on every authenticated request but only takes a read lock on an in-memory map,
+  and `lastSeen` is written at most every five minutes so a busy session does not mean constant
+  writes to an SD card. A store that cannot be read starts empty, which signs everyone out
+  rather than failing open.
+
 ## 2.15.0
 
 ### Added
