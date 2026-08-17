@@ -13,6 +13,7 @@ import (
 	"NanoKVM-Server/logger"
 	"NanoKVM-Server/middleware"
 	"NanoKVM-Server/router"
+	"NanoKVM-Server/service/actions"
 	"NanoKVM-Server/service/auth"
 	"NanoKVM-Server/service/camera"
 	"NanoKVM-Server/service/mqtt"
@@ -85,6 +86,9 @@ func run() {
 
 	network.EnsureDNSSanity()
 	network.ApplyStoredTimeSync()
+
+	// Follows the physical button so it can run a custom action.
+	go actions.WatchButton()
 
 	// Restore camera access, if it was enabled.
 	camera.ApplyStored()

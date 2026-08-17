@@ -44,6 +44,7 @@ func server(r *gin.Engine) {
 	mqttRouter(r)
 	switcherRouter(r)
 	cameraRouter(r)
+	actionsRouter(r)
 	hidRouter(r)
 	controlRouter(r, control, picoclawService)
 	mcpRouter(r, control, picoclawService)
