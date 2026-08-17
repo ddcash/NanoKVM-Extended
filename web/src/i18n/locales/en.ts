@@ -249,6 +249,13 @@ const en = {
       stopBits: 'Stop bits',
       confirm: 'Ok'
     },
+    actions: {
+      title: 'Actions',
+      empty: 'Nothing configured yet. Add actions in Settings > Actions.',
+      ran: 'Ran {{name}}',
+      runFailed: 'Failed to run',
+      loadFailed: 'Failed to load actions'
+    },
     kvmSwitch: {
       title: 'KVM Switch',
       sent: 'Sent {{name}}',
@@ -324,6 +331,38 @@ const en = {
         killFailed: 'Failed to stop the process',
         protected: 'System',
         protectedTip: 'This keeps the device running, so it cannot be stopped here.'
+      },
+      actions: {
+        title: 'Actions',
+        desc: "Drive a GPIO pin or run a command, from the menu bar or the NanoKVM's own button. Useful for relays, LEDs, resetting a machine, or anything else wired to the header.",
+        list: 'Actions',
+        add: 'Add',
+        namePlaceholder: 'Name, e.g. Rack light',
+        typeGpio: 'GPIO pin',
+        typeCommand: 'Command',
+        modePulse: 'Pulse',
+        modeHigh: 'Set high',
+        modeLow: 'Set low',
+        activeLow: 'Active low (most relay boards)',
+        reserved:
+          'The firmware uses this pin for {{use}}. Driving it here will interfere with that.',
+        showInMenu: 'Show in the menu bar',
+        test: 'Test',
+        button: 'Physical button',
+        buttonDesc:
+          'The NanoKVM has one button, told apart by how long it is held. Hold it for two seconds or more for a long press.',
+        shortPress: 'Short press',
+        longPress: 'Long press',
+        keepDefaults: 'Built-in behaviour is kept',
+        keepDefaultsDesc:
+          'OLED paging, Wi-Fi setup and hold-to-reset-password keep working. A custom action runs alongside them rather than replacing them.',
+        always: 'Always on',
+        none: 'Nothing',
+        save: 'Save',
+        saved: 'Saved',
+        saveFailed: 'Failed to save',
+        ran: 'Action ran',
+        runFailed: 'Failed to run'
       },
       switcher: {
         title: 'KVM Switch',

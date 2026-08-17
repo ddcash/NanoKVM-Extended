@@ -12,6 +12,7 @@ export const DEFAULT_MENU_ORDER = [
   'script',
   'wol',
   'kvmSwitch',
+  'actions',
   'picoclaw',
   'power'
 ];

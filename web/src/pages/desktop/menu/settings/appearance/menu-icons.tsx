@@ -12,7 +12,8 @@ import {
   NetworkIcon,
   PowerIcon,
   TerminalSquareIcon,
-  XIcon
+  XIcon,
+  ZapIcon
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
@@ -33,6 +34,7 @@ export const MenuIcons = () => {
     script: <FileJsonIcon size={16} />,
     wol: <NetworkIcon size={16} />,
     kvmSwitch: <MonitorIcon size={16} />,
+    actions: <ZapIcon size={16} />,
     picoclaw: <Robot size={16} />,
     power: <PowerIcon size={16} />
   };

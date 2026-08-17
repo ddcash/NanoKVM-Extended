@@ -13,7 +13,8 @@ import {
   RadioIcon,
   SettingsIcon,
   SmartphoneIcon,
-  UserRoundIcon
+  UserRoundIcon,
+  ZapIcon
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import semver from 'semver';
@@ -27,6 +28,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 
 import { About } from './about';
 import { Account } from './account';
+import { Actions } from './actions';
 import { Appearance } from './appearance';
 import { Device } from './device';
 import { MCP } from './mcp';
@@ -56,6 +58,7 @@ export const Settings = () => {
     { id: 'network', icon: <NetworkIcon size={16} />, component: <Network /> },
     { id: 'resources', icon: <ActivityIcon size={16} />, component: <Resources /> },
     { id: 'switcher', icon: <MonitorIcon size={16} />, component: <Switcher /> },
+    { id: 'actions', icon: <ZapIcon size={16} />, component: <Actions /> },
     { id: 'mqtt', icon: <RadioIcon size={16} />, component: <Mqtt /> },
     { id: 'mcp', icon: <BotIcon size={16} />, component: <MCP /> },
     {
