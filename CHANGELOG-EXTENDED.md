@@ -27,6 +27,29 @@ What it contains:
 Before reviving it: H.265 over WebRTC works only in Chrome 136+ and Safari 18+. Firefox does
 not support it and has stated it will not.
 
+## 2.20.0
+
+### Fixed
+
+- **Untranslated keys were showing on screen** — the camera panel displayed `settings.mqtt.camera`
+  and friends instead of its labels, and the Wake-on-LAN name field showed a raw key. Both were
+  edits that silently failed to match the locale file and were invisible until someone opened
+  that particular panel.
+
+  A build now fails if any `t('...')` key used in the source is missing from the locale, so this
+  cannot ship again. The check found one more missing key beyond the reported ones.
+
+### Changed
+
+- **The MQTT settings tab is now "Smart Home"**, which is what it is actually for. It covers
+  Home Assistant discovery and the camera stream, only one of which involves MQTT.
+
+- **The camera section says what it really does.** It was filed under MQTT, which implied the
+  video goes through the broker. It does not: the stream is served directly over HTTPS and
+  authenticated by the token in its URL, nothing is published to the broker, and no frames pass
+  through it. go2rtc reads that MJPEG stream and re-serves it as WebRTC, so the transcoding
+  happens on the Home Assistant machine rather than here.
+
 ## 2.19.0
 
 ### Added

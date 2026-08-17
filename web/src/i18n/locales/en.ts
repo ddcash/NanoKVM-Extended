@@ -266,6 +266,7 @@ const en = {
     },
     wol: {
       title: 'Wake-on-LAN',
+      namePlaceholder: 'Name (optional)',
       save: 'Save',
       saveTip: 'Add this device to the list without waking it',
       saving: 'Saving...',
@@ -394,7 +395,7 @@ const en = {
         saveFailed: 'Failed to save'
       },
       mqtt: {
-        title: 'MQTT',
+        title: 'Smart Home',
         enable: 'Enable MQTT',
         enableDesc:
           'Publish commands to an MQTT broker, for example to trigger an ESPHome IR blaster that switches a KVM switch input',
@@ -423,6 +424,16 @@ const en = {
         haPrefix: 'Discovery prefix',
         haPrefixDesc:
           "Leave as homeassistant unless you changed it in Home Assistant's MQTT settings."
+      },
+      camera: {
+        title: 'Camera stream (not MQTT)',
+        desc: 'Lets Home Assistant show the screen. This does not go through MQTT: the video is served directly over HTTPS and authenticated by the token in the URL below, so nothing is published to the broker and no frames pass through it.',
+        url: 'Stream URL',
+        urlDesc:
+          "Treat this like a password: anyone holding it can watch the target's screen. Turning the switch off and on again issues a new one and invalidates the old.",
+        hint: 'Point go2rtc at this, and Home Assistant picks the camera up from go2rtc',
+        how: 'go2rtc reads this MJPEG stream and re-serves it as WebRTC. The transcoding happens on your Home Assistant machine, so this device only ever serves the one stream it already produces.',
+        failed: 'Failed to update camera access'
       },
       mcp: {
         title: 'MCP Service',

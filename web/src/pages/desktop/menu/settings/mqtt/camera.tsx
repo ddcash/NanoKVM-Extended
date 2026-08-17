@@ -27,13 +27,13 @@ export const Camera = () => {
       .setCamera(next)
       .then((rsp: any) => {
         if (rsp.code !== 0) {
-          message.error(rsp.msg || t('settings.mqtt.cameraFailed'));
+          message.error(rsp.msg || t('settings.camera.failed'));
           return;
         }
         setEnabled(!!rsp.data?.enabled);
         setToken(rsp.data?.token || '');
       })
-      .catch(() => message.error(t('settings.mqtt.cameraFailed')))
+      .catch(() => message.error(t('settings.camera.failed')))
       .finally(() => setIsLoading(false));
   }
 
@@ -43,22 +43,23 @@ export const Camera = () => {
     <>
       <div className="flex items-center justify-between">
         <div className="flex flex-col">
-          <span>{t('settings.mqtt.camera')}</span>
-          <span className="text-xs text-neutral-500">{t('settings.mqtt.cameraDesc')}</span>
+          <span>{t('settings.camera.title')}</span>
+          <span className="text-xs text-neutral-500">{t('settings.camera.desc')}</span>
         </div>
         <Switch checked={enabled} loading={isLoading} onChange={toggle} />
       </div>
 
       {enabled && streamUrl && (
         <div className="mt-4 flex flex-col space-y-2">
-          <span className="text-sm">{t('settings.mqtt.cameraUrl')}</span>
+          <span className="text-sm">{t('settings.camera.url')}</span>
           <Input.TextArea value={streamUrl} readOnly autoSize spellCheck={false} />
-          <span className="text-xs text-neutral-500">{t('settings.mqtt.cameraUrlDesc')}</span>
+          <span className="text-xs text-neutral-500">{t('settings.camera.urlDesc')}</span>
+          <span className="text-xs text-neutral-500">{t('settings.camera.how')}</span>
 
           <Alert
             type="info"
             showIcon
-            message={t('settings.mqtt.cameraHint')}
+            message={t('settings.camera.hint')}
             description={
               <code className="whitespace-pre-wrap break-all text-xs">
                 {`streams:\n  nanokvm: ${streamUrl}`}

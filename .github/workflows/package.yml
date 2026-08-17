@@ -139,7 +139,9 @@ jobs:
         run: npm install --global pnpm@11
 
       - name: Build frontend
-        run: make web
+        run: |
+          node web/scripts/check-i18n.cjs
+          make web
 
       - name: Log in to GHCR
         env:
