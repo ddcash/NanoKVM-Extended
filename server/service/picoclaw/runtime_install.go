@@ -85,7 +85,7 @@ func (s *Service) runInstallRuntime(ctx context.Context, cancel context.CancelFu
 	}()
 
 	s.setInstallProgress("downloading", 5, "")
-	log.Debugf("picoclaw install: downloading checksum from %s", picoclawChecksumURL)
+	log.Debugf("picoclaw install: downloading checksum from %s", checksumURL())
 	expectedDigest, err := downloadPicoclawChecksum(ctx)
 	if err != nil {
 		log.Errorf("picoclaw install: checksum download failed: %v", err)
@@ -95,7 +95,7 @@ func (s *Service) runInstallRuntime(ctx context.Context, cancel context.CancelFu
 	log.Debug("picoclaw install: checksum file downloaded")
 
 	archivePath := filepath.Join(picoclawCacheDir, "picoclaw.tar.gz")
-	log.Debugf("picoclaw install: downloading archive from %s to %s", picoclawDownloadURL, archivePath)
+	log.Debugf("picoclaw install: downloading archive from %s to %s", downloadURL(), archivePath)
 	if err := downloadPicoclawArchive(ctx, archivePath, func(downloaded int64, total int64) {
 		progress := 10
 		if total > 0 {
@@ -153,7 +153,7 @@ func (s *Service) runInstallRuntime(ctx context.Context, cancel context.CancelFu
 }
 
 func downloadPicoclawArchive(ctx context.Context, destination string, onProgress func(downloaded int64, total int64)) error {
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, picoclawDownloadURL, nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, downloadURL(), nil)
 	if err != nil {
 		return fmt.Errorf("failed to create download request: %w", err)
 	}
@@ -184,7 +184,7 @@ func downloadPicoclawArchive(ctx context.Context, destination string, onProgress
 }
 
 func downloadPicoclawChecksum(ctx context.Context) (string, error) {
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, picoclawChecksumURL, nil)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, checksumURL(), nil)
 	if err != nil {
 		return "", fmt.Errorf("failed to create checksum request: %w", err)
 	}
@@ -207,7 +207,7 @@ func downloadPicoclawChecksum(ctx context.Context) (string, error) {
 		return "", fmt.Errorf("failed to read checksum file: %w", err)
 	}
 
-	digest, err := parseSHA512Digest(string(data), filepath.Base(picoclawDownloadURL))
+	digest, err := parseSHA512Digest(string(data), filepath.Base(downloadURL()))
 	if err != nil {
 		return "", err
 	}

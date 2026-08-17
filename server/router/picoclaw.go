@@ -48,6 +48,9 @@ func picoclawRouter(r *gin.Engine, service *picoclaw.Service) {
 	localAPI.POST(picoclawLoadImagePath, service.LoadImage)
 	localAPI.GET(picoclawRuntimeSessionPath, service.GetRuntimeSession)
 
+	frontendAPI.GET("/picoclaw/source", service.GetSource)   // where the archive is fetched from
+	frontendAPI.POST("/picoclaw/source", service.SetSource)
+
 	frontendAPI.POST(picoclawModelConfigPath, service.UpdateModelConfig)
 	frontendAPI.POST(picoclawAgentProfilePath, service.UpdateAgentProfile)
 	frontendAPI.GET(picoclawSessionsPath, service.ListSessions)
