@@ -27,6 +27,32 @@ What it contains:
 Before reviving it: H.265 over WebRTC works only in Chrome 136+ and Safari 18+. Firefox does
 not support it and has stated it will not.
 
+## 2.14.0
+
+### Fixed
+
+- **DNS was completely broken on any device using DHCP.** BusyBox's udhcpc script writes
+  `resolv.conf` as `nameserver 1.1.1.1 # eth0`, and musl's resolver — unlike glibc — treats the
+  trailing comment as part of the address, so every lookup failed with "bad address". This is
+  what made PicoClaw's download stall at a few percent and then give up.
+
+  The hook that writes clean entries already existed but was only installed when someone set
+  DNS manually, so a device left on DHCP was broken by the stock script and never received the
+  fix. It is now installed unconditionally at startup, and `resolv.conf` is repaired on every
+  start, so an already-broken device fixes itself rather than needing the file edited by hand.
+
+  udhcpc also overwrites a manual configuration on lease renewal, so a manual setting is now
+  reasserted rather than merely cleaned up.
+
+### Deliberately not implemented
+
+- **Signed updates.** Signing would mean only builds made with the maintainer's key install,
+  which works against a fork intended to be extended and rebuilt by others; it would make the
+  project harder to contribute to for a threat that is already largely covered. Updates are
+  fetched over HTTPS and verified against the SHA-512 recorded in the release manifest. This is
+  a deliberate trade in favour of the project staying open to the community, and is not an
+  oversight.
+
 ## 2.13.0
 
 ### Changed
