@@ -27,6 +27,28 @@ What it contains:
 Before reviving it: H.265 over WebRTC works only in Chrome 136+ and Safari 18+. Firefox does
 not support it and has stated it will not.
 
+## 2.15.0
+
+### Added
+
+- **Configurable NTP and STUN servers**, in Settings > Network. Both reach out to third
+  parties, and neither could be changed without editing files on the device.
+
+  ntpd ships in the base image pointed at `pool.ntp.org`, so a device talks to a public pool
+  whether or not anyone wanted it to. Servers are now set from the UI, and time sync can be
+  switched off entirely. Only the `server` lines of `ntp.conf` are rewritten; the `restrict`
+  lines the image ships are access control and are left alone. The setting is reasserted at
+  startup, since `ntp.conf` lives on the root filesystem and an image update can replace it.
+
+  STUN already defaulted to disabled but could only be changed in YAML. The stored value now
+  wins over the default, and an empty field means disabled rather than being a third state.
+
+### Fixed
+
+- `resolv.conf` is deduplicated during repair. udhcpc appends rather than replaces, so a device
+  collects a second copy of every line on each lease renewal, and musl reads only the first
+  three nameservers it finds.
+
 ## 2.14.0
 
 ### Fixed
