@@ -27,6 +27,22 @@ What it contains:
 Before reviving it: H.265 over WebRTC works only in Chrome 136+ and Safari 18+. Firefox does
 not support it and has stated it will not.
 
+## 2.18.0
+
+### Fixed
+
+- **PicoClaw could not be installed**, stalling at a few percent and then dropping back to the
+  Install button with no explanation.
+
+  The cause is not on the device. The stock URLs point at `cdn.sipeed.com`, which resolves to a
+  CDN whose addresses time out at the TCP level — reproduced from the device and from a machine
+  on an unrelated network, while GitHub over HTTPS from that same device works. Nothing in the
+  firmware can make an unreachable host reachable.
+
+  What is fixable: the download and checksum URLs can now be pointed at a mirror, under the
+  PicoClaw settings. Both must be set together, since a mirror's archive checked against the
+  stock checksum fails verification in a way that looks like corruption.
+
 ## 2.17.0
 
 ### Added
