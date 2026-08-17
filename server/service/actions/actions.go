@@ -5,9 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"os/exec"
 	"path/filepath"
-	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -19,20 +17,19 @@ import (
 	"NanoKVM-Server/proto"
 )
 
-// User-defined actions: drive a GPIO pin, or run a command.
+// User-defined actions: drive GPIO or PWM, run commands, or any sequence of
+// those, triggered from the menu bar or the NanoKVM's own button.
 //
-// The SoC exposes five gpiochips covering 352-511, of which the firmware itself
-// only uses a handful. The rest are free, which is what makes relays, LEDs and
-// anything else wired to the header usable without changing firmware.
+// The SoC exposes five gpiochips covering 352-511 and four PWM chips, of which
+// the firmware itself uses a handful. The rest are free, which is what makes
+// relays, LEDs and anything else wired to the header usable without a shell.
 const (
 	ConfigFile = "/etc/kvm/actions.json"
 
-	gpioExportPath   = "/sys/class/gpio/export"
-	gpioUnexportPath = "/sys/class/gpio/unexport"
-	gpioBase         = "/sys/class/gpio"
+	gpioExportPath = "/sys/class/gpio/export"
+	gpioBase       = "/sys/class/gpio"
 
-	// The lowest and highest gpio numbers any of this SoC's chips provide.
-	// Outside this a write would either fail or hit something unrelated.
+	// The lowest and highest gpio numbers this SoC's chips provide.
 	minGPIO = 352
 	maxGPIO = 511
 
@@ -44,52 +41,13 @@ const (
 )
 
 // Pins the firmware drives itself. Using them is allowed — repurposing the ATX
-// power and reset lines is a reasonable thing to want — but the UI says what
-// they are so it is a choice rather than a surprise.
+// power and reset lines is a reasonable thing to want — but the UI names them
+// so it is a choice rather than a surprise.
 var reservedGPIO = map[int]string{
 	503: "target power",
+	504: "power LED",
 	505: "target reset",
 	507: "target reset",
-	504: "power LED",
-}
-
-type GPIOSpec struct {
-	Pin int `json:"pin"`
-	// "high", "low" or "pulse".
-	Mode string `json:"mode"`
-	// Pulse length in milliseconds.
-	DurationMs int `json:"durationMs"`
-	// Wiring where the pin is pulled low to activate, which is how most relay
-	// boards are built.
-	ActiveLow bool `json:"activeLow"`
-}
-
-type Action struct {
-	Id   string `json:"id"`
-	Name string `json:"name"`
-	// "gpio" or "command".
-	Type    string    `json:"type"`
-	GPIO    *GPIOSpec `json:"gpio,omitempty"`
-	Command string    `json:"command,omitempty"`
-	// Shown in the menu bar. An action can exist for the physical button alone.
-	ShowInMenu bool `json:"showInMenu"`
-}
-
-// ButtonMap binds the NanoKVM's own button to actions. There is one button,
-// read as gpio-keys on /dev/input/event0, distinguished by how long it is held.
-type ButtonMap struct {
-	ShortPress string `json:"shortPress"`
-	LongPress  string `json:"longPress"`
-	// The daemon's own handling (OLED pages, Wi-Fi config, password reset) keeps
-	// working alongside a custom action unless this is cleared. Suppressing it
-	// entirely would mean changing the C++ daemon, and losing the password reset
-	// is not a good trade.
-	KeepDefaults bool `json:"keepDefaults"`
-}
-
-type Config struct {
-	Actions []Action  `json:"actions"`
-	Buttons ButtonMap `json:"buttons"`
 }
 
 var (
@@ -164,7 +122,9 @@ func (s *Service) RunAction(c *gin.Context) {
 
 	if err := Run(action); err != nil {
 		log.Errorf("action %q failed: %s", action.Name, err)
-		rsp.ErrRsp(c, -3, fmt.Sprintf("action failed: %s", err))
+		// The reason is passed through: "step 2 (gpio): export gpio 460" says
+		// far more than "action failed".
+		rsp.ErrRsp(c, -3, err.Error())
 		return
 	}
 
@@ -172,19 +132,41 @@ func (s *Service) RunAction(c *gin.Context) {
 	rsp.OkRsp(c)
 }
 
-// Run performs an action. Exported so the button watcher can use it.
-func Run(action *Action) error {
-	switch action.Type {
-	case "gpio":
-		if action.GPIO == nil {
-			return errors.New("no gpio configured")
-		}
-		return driveGPIO(*action.GPIO)
-	case "command":
-		return runCommand(action.Command)
-	default:
-		return fmt.Errorf("unknown action type %q", action.Type)
+// GetGPIOState reports a pin's current value, so a toggle can show its state.
+func (s *Service) GetGPIOState(c *gin.Context) {
+	var rsp proto.Response
+
+	cfg, err := loadConfig()
+	if err != nil {
+		rsp.ErrRsp(c, -1, "failed to load actions")
+		return
 	}
+
+	states := make([]proto.GPIOState, 0)
+	seen := make(map[int]struct{})
+
+	for _, action := range cfg.Actions {
+		for _, step := range action.Steps {
+			if step.Type != "gpio" || step.GPIO == nil {
+				continue
+			}
+			if _, done := seen[step.GPIO.Pin]; done {
+				continue
+			}
+			seen[step.GPIO.Pin] = struct{}{}
+
+			state := proto.GPIOState{Pin: step.GPIO.Pin}
+			// A pin that has never been driven is not exported, and reading it
+			// would export it as a side effect of merely looking.
+			if value, err := ReadGPIO(step.GPIO.Pin); err == nil {
+				state.Value = value
+				state.Known = true
+			}
+			states = append(states, state)
+		}
+	}
+
+	rsp.OkRspWithData(c, &proto.GetGPIOStateRsp{States: states})
 }
 
 // RunByID is what the button watcher calls, since a binding stores only an id.
@@ -216,85 +198,6 @@ func findAction(id string) (*Action, error) {
 	return nil, errors.New("action not found")
 }
 
-// driveGPIO exports the pin if needed, sets it as an output and writes.
-//
-// The pin is deliberately left exported afterwards: unexporting resets the
-// line, which would drop a relay that was just switched on.
-func driveGPIO(spec GPIOSpec) error {
-	if spec.Pin < minGPIO || spec.Pin > maxGPIO {
-		return fmt.Errorf("gpio %d is outside the range this device provides", spec.Pin)
-	}
-
-	pinDir := filepath.Join(gpioBase, fmt.Sprintf("gpio%d", spec.Pin))
-	if _, err := os.Stat(pinDir); err != nil {
-		if err := os.WriteFile(gpioExportPath, []byte(strconv.Itoa(spec.Pin)), 0o200); err != nil {
-			return fmt.Errorf("export gpio %d: %w", spec.Pin, err)
-		}
-		// udev creates the attributes asynchronously.
-		for attempt := 0; attempt < 20; attempt++ {
-			if _, err := os.Stat(filepath.Join(pinDir, "value")); err == nil {
-				break
-			}
-			time.Sleep(25 * time.Millisecond)
-		}
-	}
-
-	if err := os.WriteFile(filepath.Join(pinDir, "direction"), []byte("out"), 0o644); err != nil {
-		return fmt.Errorf("set gpio %d as output: %w", spec.Pin, err)
-	}
-
-	active, idle := "1", "0"
-	if spec.ActiveLow {
-		active, idle = "0", "1"
-	}
-
-	valuePath := filepath.Join(pinDir, "value")
-
-	switch spec.Mode {
-	case "high":
-		return os.WriteFile(valuePath, []byte(active), 0o644)
-	case "low":
-		return os.WriteFile(valuePath, []byte(idle), 0o644)
-	case "pulse":
-		duration := spec.DurationMs
-		if duration <= 0 {
-			duration = defaultPulseDur
-		}
-		if err := os.WriteFile(valuePath, []byte(active), 0o644); err != nil {
-			return err
-		}
-		time.Sleep(time.Duration(duration) * time.Millisecond)
-		return os.WriteFile(valuePath, []byte(idle), 0o644)
-	default:
-		return fmt.Errorf("unknown gpio mode %q", spec.Mode)
-	}
-}
-
-func runCommand(command string) error {
-	command = strings.TrimSpace(command)
-	if command == "" {
-		return errors.New("no command configured")
-	}
-
-	// Bounded, so a command that never returns cannot pin a core on a device
-	// that only has one.
-	cmd := exec.Command("sh", "-c", command)
-	if err := cmd.Start(); err != nil {
-		return err
-	}
-
-	done := make(chan error, 1)
-	go func() { done <- cmd.Wait() }()
-
-	select {
-	case err := <-done:
-		return err
-	case <-time.After(commandTimeout):
-		_ = cmd.Process.Kill()
-		return fmt.Errorf("command timed out after %s", commandTimeout)
-	}
-}
-
 func validate(cfg *Config) error {
 	if cfg.Actions == nil {
 		cfg.Actions = []Action{}
@@ -310,7 +213,7 @@ func validate(cfg *Config) error {
 		action := &cfg.Actions[i]
 		action.Name = strings.TrimSpace(action.Name)
 
-		if action.Id == "" {
+		if action.Id == "" || strings.HasPrefix(action.Id, "new-") {
 			action.Id = uuid.NewString()
 		}
 		if action.Name == "" {
@@ -325,39 +228,83 @@ func validate(cfg *Config) error {
 		names[action.Name] = struct{}{}
 		ids[action.Id] = struct{}{}
 
-		switch action.Type {
-		case "gpio":
-			if action.GPIO == nil {
-				return fmt.Errorf("action %q has no gpio settings", action.Name)
+		if len(action.Steps) == 0 {
+			return fmt.Errorf("action %q has no steps", action.Name)
+		}
+		if len(action.Steps) > maxStepsPerAction {
+			return fmt.Errorf("action %q has more than %d steps", action.Name, maxStepsPerAction)
+		}
+
+		for j := range action.Steps {
+			if err := validateStep(action.Name, j, &action.Steps[j]); err != nil {
+				return err
 			}
-			if action.GPIO.Pin < minGPIO || action.GPIO.Pin > maxGPIO {
-				return fmt.Errorf("action %q: gpio must be between %d and %d", action.Name, minGPIO, maxGPIO)
-			}
-			switch action.GPIO.Mode {
-			case "high", "low", "pulse":
-			default:
-				return fmt.Errorf("action %q: mode must be high, low or pulse", action.Name)
-			}
-			if action.GPIO.DurationMs < 0 || action.GPIO.DurationMs > maxPulseMs {
-				return fmt.Errorf("action %q: pulse must be between 0 and %d ms", action.Name, maxPulseMs)
-			}
-		case "command":
-			if strings.TrimSpace(action.Command) == "" {
-				return fmt.Errorf("action %q has no command", action.Name)
-			}
-		default:
-			return fmt.Errorf("action %q: type must be gpio or command", action.Name)
 		}
 	}
 
 	// A binding pointing at a deleted action would fail silently on a press.
-	for _, binding := range []string{cfg.Buttons.ShortPress, cfg.Buttons.LongPress} {
+	for _, binding := range []string{
+		cfg.Buttons.ShortPress,
+		cfg.Buttons.DoublePress,
+		cfg.Buttons.LongPress,
+		cfg.Buttons.VeryLongPress,
+	} {
 		if binding == "" {
 			continue
 		}
 		if _, ok := ids[binding]; !ok {
 			return errors.New("a button is bound to an action that no longer exists")
 		}
+	}
+
+	return nil
+}
+
+func validateStep(actionName string, index int, step *Step) error {
+	where := fmt.Sprintf("action %q step %d", actionName, index+1)
+
+	switch step.Type {
+	case "gpio":
+		if step.GPIO == nil {
+			return fmt.Errorf("%s: no gpio settings", where)
+		}
+		if step.GPIO.Pin < minGPIO || step.GPIO.Pin > maxGPIO {
+			return fmt.Errorf("%s: gpio must be between %d and %d", where, minGPIO, maxGPIO)
+		}
+		switch step.GPIO.Mode {
+		case "high", "low", "pulse", "toggle":
+		default:
+			return fmt.Errorf("%s: mode must be high, low, pulse or toggle", where)
+		}
+		if step.GPIO.DurationMs < 0 || step.GPIO.DurationMs > maxPulseMs {
+			return fmt.Errorf("%s: pulse must be between 0 and %d ms", where, maxPulseMs)
+		}
+	case "pwm":
+		if step.PWM == nil {
+			return fmt.Errorf("%s: no pwm settings", where)
+		}
+		if step.PWM.Chip < 0 || step.PWM.Channel < 0 {
+			return fmt.Errorf("%s: pwm chip and channel must not be negative", where)
+		}
+		if step.PWM.DutyPercent < 0 || step.PWM.DutyPercent > 100 {
+			return fmt.Errorf("%s: duty must be between 0 and 100", where)
+		}
+		if step.PWM.PeriodNs < 0 {
+			return fmt.Errorf("%s: period must not be negative", where)
+		}
+	case "command":
+		if step.Command == nil || strings.TrimSpace(step.Command.Command) == "" {
+			return fmt.Errorf("%s: no command", where)
+		}
+		if step.Command.TimeoutSec < 0 || step.Command.TimeoutSec > maxCommandTimeout {
+			return fmt.Errorf("%s: timeout must be between 0 and %d seconds", where, maxCommandTimeout)
+		}
+	case "delay":
+		if step.DelayMs <= 0 || step.DelayMs > maxDelayMs {
+			return fmt.Errorf("%s: delay must be between 1 and %d ms", where, maxDelayMs)
+		}
+	default:
+		return fmt.Errorf("%s: type must be gpio, pwm, command or delay", where)
 	}
 
 	return nil
@@ -387,6 +334,12 @@ func loadConfig() (Config, error) {
 	}
 	if cfg.Actions == nil {
 		cfg.Actions = []Action{}
+	}
+
+	// Actions saved before steps existed are converted on read, so upgrading
+	// does not silently drop what someone had configured.
+	for i := range cfg.Actions {
+		cfg.Actions[i].migrate()
 	}
 
 	return cfg, nil

@@ -15,4 +15,5 @@ func actionsRouter(r *gin.Engine) {
 	api.GET("/actions", service.GetActions)      // custom GPIO and command actions
 	api.POST("/actions", service.SetActions)     // save them
 	api.POST("/actions/run", service.RunAction)  // trigger one
+	api.GET("/actions/gpio", service.GetGPIOState) // current pin values
 }

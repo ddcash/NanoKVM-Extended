@@ -18,9 +18,16 @@ import (
 const (
 	inputDevice = "/dev/input/event0"
 
-	// Matches the daemon's own threshold, so "long press" means the same thing
-	// to a user regardless of which handler reacts.
-	longPressMs = 2000
+	// These match the C++ daemon's own thresholds (KEY_LONG_PRESS and
+	// KEY_LONGLONG_PRESS), so a press means the same thing to a user whichever
+	// handler reacts to it.
+	longPressMs     = 1500
+	veryLongPressMs = 9000
+
+	// Two presses closer together than this count as a double press. Long
+	// enough to be comfortable, short enough not to delay every single press
+	// noticeably.
+	doublePressWindowMs = 450
 
 	// Below this a press is noise rather than intent.
 	minPressMs = 50
@@ -55,6 +62,9 @@ func WatchButton() {
 
 	buf := make([]byte, inputEventSize)
 	var pressedAt time.Time
+	// A short press is held back briefly in case a second one follows, which is
+	// the only way to tell a single press from the first half of a double.
+	var pendingShort *time.Timer
 
 	for {
 		if _, err := file.Read(buf); err != nil {
@@ -86,22 +96,57 @@ func WatchButton() {
 				continue
 			}
 
-			go handlePress(held)
+			// Anything longer than a short press cannot be part of a double,
+			// so it fires immediately and cancels anything waiting.
+			if held >= longPressMs*time.Millisecond {
+				if pendingShort != nil {
+					pendingShort.Stop()
+					pendingShort = nil
+				}
+				go handleHeldPress(held)
+				continue
+			}
+
+			if pendingShort != nil {
+				// The second of two short presses.
+				pendingShort.Stop()
+				pendingShort = nil
+				go handleBinding("double")
+				continue
+			}
+
+			pendingShort = time.AfterFunc(doublePressWindowMs*time.Millisecond, func() {
+				pendingShort = nil
+				handleBinding("short")
+			})
 		}
 	}
 }
 
-func handlePress(held time.Duration) {
+func handleHeldPress(held time.Duration) {
+	kind := "long"
+	if held >= veryLongPressMs*time.Millisecond {
+		kind = "veryLong"
+	}
+	handleBinding(kind)
+}
+
+func handleBinding(kind string) {
 	cfg, err := loadConfig()
 	if err != nil {
 		return
 	}
 
-	binding := cfg.Buttons.ShortPress
-	kind := "short"
-	if held >= longPressMs*time.Millisecond {
+	var binding string
+	switch kind {
+	case "short":
+		binding = cfg.Buttons.ShortPress
+	case "double":
+		binding = cfg.Buttons.DoublePress
+	case "long":
 		binding = cfg.Buttons.LongPress
-		kind = "long"
+	case "veryLong":
+		binding = cfg.Buttons.VeryLongPress
 	}
 
 	if binding == "" {
