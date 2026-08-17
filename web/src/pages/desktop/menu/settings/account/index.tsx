@@ -6,6 +6,7 @@ import { useNavigate } from 'react-router-dom';
 import * as api from '@/api/auth.ts';
 
 import { Logout } from './logout.tsx';
+import { Sessions } from './sessions.tsx';
 import { Totp } from './totp.tsx';
 
 export const Account = () => {
@@ -45,6 +46,7 @@ export const Account = () => {
         </div>
 
         <Totp />
+        <Sessions />
       </div>
 
       <Divider className="opacity-50" />

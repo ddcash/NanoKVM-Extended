@@ -45,3 +45,22 @@ export function changePassword(username: string, password: string) {
 export function isPasswordUpdated() {
   return http.get('/api/auth/password');
 }
+
+export type SessionInfo = {
+  id: string;
+  username: string;
+  ip: string;
+  userAgent: string;
+  createdAt: number;
+  lastSeen: number;
+  current: boolean;
+};
+
+export function getSessions() {
+  return http.get('/api/auth/sessions');
+}
+
+// Pass all to end every session except this one.
+export function revokeSession(payload: { id?: string; all?: boolean }) {
+  return http.post('/api/auth/sessions/revoke', payload);
+}

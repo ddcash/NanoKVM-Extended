@@ -50,3 +50,25 @@ type ChangePasswordReq struct {
 type IsPasswordUpdatedRsp struct {
 	IsUpdated bool `json:"isUpdated"`
 }
+
+type SessionInfo struct {
+	Id        string `json:"id"`
+	Username  string `json:"username"`
+	IP        string `json:"ip"`
+	UserAgent string `json:"userAgent"`
+	CreatedAt int64  `json:"createdAt"`
+	LastSeen  int64  `json:"lastSeen"`
+	// True for the session making the request, which the UI must not offer to
+	// revoke as though it were someone else's.
+	Current bool `json:"current"`
+}
+
+type GetSessionsRsp struct {
+	Sessions []SessionInfo `json:"sessions"`
+}
+
+type RevokeSessionReq struct {
+	Id string `json:"id" form:"id"`
+	// Ends every session except the caller's.
+	All bool `json:"all" form:"all"`
+}

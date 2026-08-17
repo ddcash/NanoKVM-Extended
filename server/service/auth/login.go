@@ -82,7 +82,9 @@ func (s *Service) Login(c *gin.Context) {
 	ClearLoginAttempt(clientIP)
 	Audit(c, "login", log.Fields{"username": req.Username})
 
-	token, err := middleware.GenerateJWT(req.Username)
+	sessionId := CreateSession(c, req.Username)
+
+	token, err := middleware.GenerateJWT(req.Username, sessionId)
 	if err != nil {
 		time.Sleep(1 * time.Second)
 		rsp.ErrRsp(c, -3, "generate token failed")
@@ -98,6 +100,12 @@ func (s *Service) Login(c *gin.Context) {
 
 func (s *Service) Logout(c *gin.Context) {
 	conf := config.GetInstance()
+
+	if id, ok := c.Get("sessionId"); ok {
+		if sessionId, valid := id.(string); valid {
+			RemoveSession(sessionId)
+		}
+	}
 
 	if conf.JWT.RevokeTokensOnLogout {
 		config.RegenerateSecretKey()

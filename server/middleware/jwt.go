@@ -13,8 +13,16 @@ import (
 
 type Token struct {
 	Username string `json:"username"`
+	// Identifies the server-side session. A token without one predates session
+	// tracking and is refused, so revocation cannot be sidestepped by
+	// presenting an older token.
+	SessionId string `json:"sid"`
 	jwt.RegisteredClaims
 }
+
+// SessionValidator is set by the auth service. It lives here as a function to
+// keep the middleware from importing the service, which imports this package.
+var SessionValidator func(id string) bool
 
 func CheckToken() gin.HandlerFunc {
 	return func(c *gin.Context) {
@@ -61,8 +69,19 @@ func allowByToken(c *gin.Context) bool {
 		return false
 	}
 
-	_, err = ParseJWT(cookie)
-	return err == nil
+	token, err := ParseJWT(cookie)
+	if err != nil {
+		return false
+	}
+
+	if SessionValidator != nil && !SessionValidator(token.SessionId) {
+		return false
+	}
+
+	// Handlers use this to mark which session is the caller's own.
+	c.Set("sessionId", token.SessionId)
+
+	return true
 }
 
 func abortUnauthorized(c *gin.Context) {
@@ -70,13 +89,14 @@ func abortUnauthorized(c *gin.Context) {
 	c.Abort()
 }
 
-func GenerateJWT(username string) (string, error) {
+func GenerateJWT(username string, sessionId string) (string, error) {
 	conf := config.GetInstance()
 
 	expireDuration := time.Duration(conf.JWT.RefreshTokenDuration) * time.Second
 
 	claims := Token{
-		Username: username,
+		Username:  username,
+		SessionId: sessionId,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(expireDuration)),
 		},

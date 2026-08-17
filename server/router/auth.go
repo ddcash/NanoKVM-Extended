@@ -19,6 +19,9 @@ func authRouter(r *gin.Engine) {
 	api.POST("/auth/password", service.ChangePassword)   // change password
 	api.POST("/auth/logout", service.Logout)             // logout
 
+	api.GET("/auth/sessions", service.GetSessions)       // active sessions
+	api.POST("/auth/sessions/revoke", service.RevokeSession)
+
 	api.GET("/auth/totp", service.GetTotp)               // two-factor state
 	api.POST("/auth/totp/setup", service.SetupTotp)      // generate a secret
 	api.POST("/auth/totp/enable", service.EnableTotp)    // confirm code, enable

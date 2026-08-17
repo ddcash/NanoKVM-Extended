@@ -13,6 +13,7 @@ import (
 	"NanoKVM-Server/logger"
 	"NanoKVM-Server/middleware"
 	"NanoKVM-Server/router"
+	"NanoKVM-Server/service/auth"
 	"NanoKVM-Server/service/camera"
 	"NanoKVM-Server/service/mqtt"
 	"NanoKVM-Server/service/network"
@@ -77,6 +78,11 @@ func run() {
 	router.Init(r)
 
 	// Repair DNS before anything tries to resolve a name.
+	// Sessions must be loaded, and the validator wired, before any request is
+	// authenticated.
+	auth.LoadSessions()
+	middleware.SessionValidator = auth.TouchSession
+
 	network.EnsureDNSSanity()
 	network.ApplyStoredTimeSync()
 
