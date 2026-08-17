@@ -15,6 +15,7 @@ import (
 	"NanoKVM-Server/router"
 	"NanoKVM-Server/service/camera"
 	"NanoKVM-Server/service/mqtt"
+	"NanoKVM-Server/service/network"
 	"NanoKVM-Server/service/vm"
 	"NanoKVM-Server/service/vm/jiggler"
 	"NanoKVM-Server/utils"
@@ -74,6 +75,9 @@ func run() {
 	}
 
 	router.Init(r)
+
+	// Repair DNS before anything tries to resolve a name.
+	network.EnsureDNSSanity()
 
 	// Restore camera access, if it was enabled.
 	camera.ApplyStored()

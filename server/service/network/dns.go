@@ -3,6 +3,7 @@ package network
 import (
 	"bufio"
 	_ "embed"
+	"errors"
 	"fmt"
 	"net"
 	"os"
@@ -639,4 +640,90 @@ func installUDHCPCDNSHook() error {
 	}
 
 	return nil
+}
+
+// EnsureDNSSanity repairs DNS at startup.
+//
+// Two things go wrong on this platform. BusyBox's udhcpc script writes
+// resolv.conf as "nameserver 1.1.1.1 # eth0", and musl's resolver — unlike
+// glibc — treats the trailing comment as part of the address, so every lookup
+// fails with "bad address". The hook in scripts/99-nanokvm-dns writes clean
+// entries, but it was only installed when someone set DNS manually, leaving a
+// DHCP device to be broken by the stock script. udhcpc also overwrites a
+// manual configuration on lease renewal.
+//
+// So: install the hook unconditionally, and repair whatever the file currently
+// holds. A device that has already been broken by a renewal fixes itself on the
+// next start rather than needing the file edited by hand.
+func EnsureDNSSanity() {
+	if err := installUDHCPCDNSHook(); err != nil {
+		log.Errorf("failed to install udhcpc dns hook: %s", err)
+	}
+
+	if err := repairResolvConf(); err != nil {
+		log.Errorf("failed to repair %s: %s", etcResolvFile, err)
+	}
+}
+
+func repairResolvConf() error {
+	// A manual configuration is authoritative: if a renewal replaced it, put it
+	// back rather than merely cleaning up what overwrote it.
+	if currentDNSMode() == dnsModeManual {
+		if servers := readManualDNSServers(); len(servers) > 0 {
+			current, _ := parseResolvConf(etcResolvFile)
+			if !sameServers(current, servers) {
+				log.Infof("restoring manual dns servers over %s", etcResolvFile)
+				return renderResolvConf(etcResolvFile, servers)
+			}
+		}
+	}
+
+	data, err := os.ReadFile(etcResolvFile)
+	if err != nil {
+		if errors.Is(err, os.ErrNotExist) {
+			return nil
+		}
+		return err
+	}
+
+	cleaned, changed := stripInlineComments(string(data))
+	if !changed {
+		return nil
+	}
+
+	log.Infof("removing inline comments from %s, which musl cannot parse", etcResolvFile)
+	return os.WriteFile(etcResolvFile, []byte(cleaned), 0o644)
+}
+
+// stripInlineComments removes trailing comments while keeping whole-line ones,
+// which are harmless and may carry provenance worth reading.
+func stripInlineComments(content string) (string, bool) {
+	lines := strings.Split(content, "\n")
+	changed := false
+
+	for i, line := range lines {
+		trimmed := strings.TrimSpace(line)
+		if trimmed == "" || strings.HasPrefix(trimmed, "#") {
+			continue
+		}
+
+		if index := strings.Index(line, "#"); index >= 0 {
+			lines[i] = strings.TrimRight(line[:index], " \t")
+			changed = true
+		}
+	}
+
+	return strings.Join(lines, "\n"), changed
+}
+
+func sameServers(a []string, b []string) bool {
+	if len(a) != len(b) {
+		return false
+	}
+	for i := range a {
+		if a[i] != b[i] {
+			return false
+		}
+	}
+	return true
 }
