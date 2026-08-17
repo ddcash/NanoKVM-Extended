@@ -1,3 +1,4 @@
+package proto
 
 type GetPicoclawSourceRsp struct {
 	DownloadUrl string `json:"downloadUrl"`
